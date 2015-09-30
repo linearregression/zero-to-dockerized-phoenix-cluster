@@ -1,7 +1,7 @@
 zero-to-dockerized-phoenix-cluster
 ----------------------------------
 
-CoreOX + Kubernetes + Phoenix
+CoreOS + Kubernetes + Phoenix on Digital Ocean
 
 # Goals
 
