@@ -10,6 +10,9 @@ SIZE=""
 DROPLET_SIZE=""
 INPUT_DROPLET_SIZE=""
 MASTER_PRIVATE_IP=""
+key_file=""
+pub_file=""
+SSH_ID=""
 
 USAGE="Usage: $0 [-k ssh key id] [-t digitalocean v2 token] [-o droplet name prefix] [-n number of droplets] [-e etcd token] [-s droplet size]
 Options:
@@ -141,8 +144,17 @@ if [ -z "$DROPLET_NAME" ]; then
     export DROPLET_NAME=$DROPLET_NAME
 fi
 
+
+
 NAME_PREFIX=$DROPLET_NAME
 export private_ip_file=$(mktemp "./private_ip.XXXXXX")
+export ssh_id_file=$(mktemp "./ssh_id.XXXXXX")
+
+echo "========================="
+echo "Creating ssh and upload to digital ocean"
+echo "========================="
+./ssh.sh
+
 for i in `seq $NUM_OF_DROPLETS`; do /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i"; done
 rm $private_ip_file
-rm ./output
+rm $ssh_id_file

@@ -31,6 +31,14 @@ cd bin
 
 https://blog.docker.com/2015/06/docker-machine-0-3-0-deep-dive/
 
+```
+ docker-machine create -d generic \
+--generic-ssh-user core \
+--generic-ssh-key ~/Downloads/manually_created_key.pub \
+--generic-ip-address 12.34.56.78 \
+jungle
+```
+
 ### STEP3) DNS Setup (namecheap)
 
 Once the droplet is up and running you should have an IP address to work with. If you're using namecheap, go to the "All Host Records" page of namecheap's "My Account > Manage Domains > Modify Domain" section.

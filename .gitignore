@@ -1,6 +1,7 @@
 DISCOVERY_URL
 private_ip.*
 public_ip.*
+ssh/*
 
 # Logs
 logs
