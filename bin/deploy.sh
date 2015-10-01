@@ -145,7 +145,6 @@ if [ -z "$DROPLET_NAME" ]; then
 fi
 
 
-
 NAME_PREFIX=$DROPLET_NAME
 export private_ip_file=$(mktemp "./private_ip.XXXXXX")
 export ssh_id_file=$(mktemp "./ssh_id.XXXXXX")
