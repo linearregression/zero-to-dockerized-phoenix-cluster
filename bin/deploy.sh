@@ -100,7 +100,8 @@ fi
 
 if [ -z "$ETCD_TOKEN" ]; then
   export DISCOVERY_URL=`curl -fsS -X PUT https://discovery.etcd.io/new`
-  echo "Please SAVE your DISCOVERY_URL safely somewhere..."
+  echo "saved etcd discovery url at ./bin/DISCOVERY_URL"
+  echo $DISCOVERY_URL > "./DISCOVERY_URL"
   echo "$DISCOVERY_URL"
 else
   export DISCOVERY_URL="https://discovery.etcd.io/$ETCD_TOKEN"
