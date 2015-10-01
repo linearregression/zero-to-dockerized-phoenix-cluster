@@ -1,9 +1,15 @@
 #!/bin/bash
 set -e
+INPUT_SSH_KEY_ID=""
+DROPLET_NAME=""
+INPUT_NUM=""
+ETCD_TOKEN=""
+DROPLET_SIZE=""
 
 USAGE="Usage: $0 [-k ssh key id] [-t digitalocean v2 token] [-o droplet name prefix] [-n number of droplets] [-e etcd token] [-s droplet size]
 Options:
     -k SSH_KEY_ID         SSH KEY ID on digitalocean. you need digitalocean token to get it.
+    -r REGION             region
     -t DO_TOKEN           digitalocean api v2 token that has read/write permission
     -o DROPLET_NAME       name prefix for droplets. core => core-1, core-2, core-3
     -n INPUT_NUM          default 3
@@ -16,6 +22,12 @@ while [ "$#" -gt 0 ]; do
         -k)
             shift 1
             INPUT_SSH_KEY_ID=$1
+            echo "INPUT_SSH_KEY_ID: $INPUT_SSH_KEY_ID "
+            ;;
+        -r)
+            shift 1
+            REGION=$1
+            echo "region: $REGION "
             ;;
         -t)
             shift 1
@@ -66,11 +78,17 @@ if [ -z "$DO_TOKEN" ]; then
 fi
 
 if (test -z "$INPUT_SSH_KEY_ID" ); then
-    echo -n "========================="
-    curl -X GET -H "Authorization: Bearer $DO_TOKEN" "https://api.digitalocean.com/v2/account/keys"
-    echo -n "========================="
-    echo -n "Please input your ssh key id for CoreOS..."
-    read -s INPUT_SSH_KEY_ID
+    echo "========================="
+    echo "Getting ssh keys from digitalocean"
+    echo ""
+    curl -X GET -H 'Content-Type: application/json' \
+                -H "Authorization: Bearer $DO_TOKEN" \
+                "https://api.digitalocean.com/v2/account/keys" | \
+    ./JSON.sh -b | grep -E 'id|name'
+    echo "========================="
+    echo "Please input your ssh key id for CoreOS."
+    echo -n ": "
+    read INPUT_SSH_KEY_ID
     export SSH_KEY_ID=$INPUT_SSH_KEY_ID
 else
   export SSH_KEY_ID=$INPUT_SSH_KEY_ID
@@ -83,6 +101,13 @@ if [ -z "$ETCD_TOKEN" ]; then
 else
   export DISCOVERY_URL="https://discovery.etcd.io/$ETCD_TOKEN"
   echo "$DISCOVERY_URL"
+fi
+
+
+if [ -z "$REGION" ]; then
+    export REGION=nyc1
+else
+    export REGION=$REGION
 fi
 
 if [ -z "$INPUT_NUM" ]; then

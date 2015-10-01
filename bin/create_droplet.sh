@@ -31,7 +31,7 @@ curl -X POST "https://api.digitalocean.com/v2/droplets" \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer $DO_TOKEN" \
      -d '{"name":"'"$DROPLET_NAME"'",
-         "region":"nyc3",
+         "region":"$REGION",
          "image": "coreos-stable",
          "size":"'"$SIZE"'",
          "private_networking":true,
