@@ -14,7 +14,6 @@ Full stack on Digital Ocean
 - [ ] use vulcand instead of nginx load balancer
 - [ ] configure DroneCI via fleet unit file (drone_conf.toml)
 - [ ] continuos deployment
-- [ ] dig into https://github.com/meteorhacks/cluster 
 
 # Deploy steps
 
@@ -23,7 +22,7 @@ if you have exported DIGITAL_OCEAN_TOKEN than,
 
 ```
 cd bin
-./deploy.sh -n 3 -o staging -t $DIGITAL_OCEAN_TOKEN -s 4gb -k <id>
+./deploy.sh -n 3 -o <name> -t $DIGITAL_OCEAN_TOKEN -s 4gb
 
 ```
 

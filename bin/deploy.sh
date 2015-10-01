@@ -1,10 +1,14 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 INPUT_SSH_KEY_ID=""
 DROPLET_NAME=""
-INPUT_NUM=""
+INPUT_NUM_OF_DROPLETS=""
+INPUT_REGION=""
+REGION=""
 ETCD_TOKEN=""
+SIZE=""
 DROPLET_SIZE=""
+INPUT_DROPLET_SIZE=""
 
 USAGE="Usage: $0 [-k ssh key id] [-t digitalocean v2 token] [-o droplet name prefix] [-n number of droplets] [-e etcd token] [-s droplet size]
 Options:
@@ -63,9 +67,12 @@ while [ "$#" -gt 0 ]; do
 done
 
 if ! echo $DROPLET_SIZE | grep -qE '512mb|1gb|2gb|4gb|8gb|16gb'; then
+    echo "========================="
     echo 'DROPLET_SIZE must be 512mb|1gb|2gb|4gb|8gb|16gb'
-    echo 'default 2gb'
-    export SIZE='2gb'
+    echo "========================="
+    echo "Please input your DROPLET_SIZE :"
+    read INPUT_DROPLET_SIZE
+    export SIZE=$INPUT_DROPLET_SIZE
 else
   export SIZE=$DROPLET_SIZE
 fi
@@ -86,8 +93,7 @@ if (test -z "$INPUT_SSH_KEY_ID" ); then
                 "https://api.digitalocean.com/v2/account/keys" | \
     ./JSON.sh -b | grep -E 'id|name'
     echo "========================="
-    echo "Please input your ssh key id for CoreOS."
-    echo -n ": "
+    echo "Please input your ssh key id for CoreOS :"
     read INPUT_SSH_KEY_ID
     export SSH_KEY_ID=$INPUT_SSH_KEY_ID
 else
@@ -105,13 +111,28 @@ fi
 
 
 if [ -z "$REGION" ]; then
-    export REGION=nyc1
+    echo "========================="
+    echo "Getting regions from digitalocean"
+    echo ""
+    curl -X GET -H 'Content-Type: application/json' \
+                -H "Authorization: Bearer $DO_TOKEN" \
+                "https://api.digitalocean.com/v2/regions" | \
+    ./JSON.sh -b | grep -E 'slug'
+    echo "========================="
+    echo "Please input your region :"
+    read INPUT_REGION
+    export REGION=$INPUT_REGION
 else
-    export REGION=$REGION
+    export REGION=nyc1
 fi
 
 if [ -z "$INPUT_NUM" ]; then
-    export NUM_OF_DROPLETS=3
+    echo "========================="
+    echo 'Number of droplets must be odd. (3, 5, 7 ..)'
+    echo "========================="
+    echo "Please input number of droplets :"
+    read INPUT_NUM_OF_DROPLETS
+    export NUM_OF_DROPLETS=$INPUT_NUM_OF_DROPLETS
 else
     export NUM_OF_DROPLETS=$INPUT_NUM
 fi
