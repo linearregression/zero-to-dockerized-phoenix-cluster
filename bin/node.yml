@@ -9,11 +9,15 @@ write-files:
         --silent --head --fail \
         http://${1}:${2}; do sleep 1 && echo -n .; done;
       exit $?
+  - path: /etc/coreos-checker
+    permissions: "0755"
+    content: |
+      private_ipv4: $private_ipv4
 coreos:
   etcd2:
     listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
     advertise-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
-    initial-cluster: master=http://<master-private-ip>:2380
+    initial-cluster: master=http://MASTER_PRIVATE_IP:2380
     proxy: on
   fleet:
     metadata: "role=node"
@@ -39,7 +43,6 @@ coreos:
         Documentation=https://github.com/kelseyhightower/setup-network-environment
         Requires=network-online.target
         After=network-online.target
-
         [Service]
         ExecStartPre=-/usr/bin/mkdir -p /opt/bin
         ExecStartPre=/usr/bin/curl -L -o /opt/bin/setup-network-environment -z /opt/bin/setup-network-environment https://github.com/kelseyhightower/setup-network-environment/releases/download/v1.0.0/setup-network-environment
@@ -55,14 +58,13 @@ coreos:
         Documentation=https://github.com/GoogleCloudPlatform/kubernetes
         Requires=setup-network-environment.service
         After=setup-network-environment.service
-
         [Service]
         ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-proxy -z /opt/bin/kube-proxy https://storage.googleapis.com/kubernetes-release/release/v0.19.3/bin/linux/amd64/kube-proxy
         ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-proxy
         # wait for kubernetes master to be up and ready
-        ExecStartPre=/opt/bin/wupiao <master-private-ip> 8080
+        ExecStartPre=/opt/bin/wupiao MASTER_PRIVATE_IP 8080
         ExecStart=/opt/bin/kube-proxy \
-        --master=<master-private-ip>:8080 \
+        --master=MASTER_PRIVATE_IP:8080 \
         --logtostderr=true
         Restart=always
         RestartSec=10
@@ -74,18 +76,17 @@ coreos:
         Documentation=https://github.com/GoogleCloudPlatform/kubernetes
         Requires=setup-network-environment.service
         After=setup-network-environment.service
-
         [Service]
         EnvironmentFile=/etc/network-environment
         ExecStartPre=/usr/bin/curl -L -o /opt/bin/kubelet -z /opt/bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v0.19.3/bin/linux/amd64/kubelet
         ExecStartPre=/usr/bin/chmod +x /opt/bin/kubelet
         # wait for kubernetes master to be up and ready
-        ExecStartPre=/opt/bin/wupiao <master-private-ip> 8080
+        ExecStartPre=/opt/bin/wupiao MASTER_PRIVATE_IP 8080
         ExecStart=/opt/bin/kubelet \
         --address=0.0.0.0 \
         --port=10250 \
         --hostname_override=${DEFAULT_IPV4} \
-        --api_servers=<master-private-ip>:8080 \
+        --api_servers=MASTER_PRIVATE_IP:8080 \
         --allow_privileged=true \
         --logtostderr=true \
         --cadvisor_port=4194 \

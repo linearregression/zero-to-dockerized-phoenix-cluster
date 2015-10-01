@@ -1,4 +1,5 @@
-jaigouk-config.yaml
+private_ip.*
+public_ip.*
 
 # Logs
 logs

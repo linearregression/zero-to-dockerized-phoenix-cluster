@@ -9,6 +9,7 @@ ETCD_TOKEN=""
 SIZE=""
 DROPLET_SIZE=""
 INPUT_DROPLET_SIZE=""
+MASTER_PRIVATE_IP=""
 
 USAGE="Usage: $0 [-k ssh key id] [-t digitalocean v2 token] [-o droplet name prefix] [-n number of droplets] [-e etcd token] [-s droplet size]
 Options:
@@ -26,17 +27,14 @@ while [ "$#" -gt 0 ]; do
         -k)
             shift 1
             INPUT_SSH_KEY_ID=$1
-            echo "INPUT_SSH_KEY_ID: $INPUT_SSH_KEY_ID "
             ;;
         -r)
             shift 1
-            REGION=$1
-            echo "region: $REGION "
+            INPUT_REGION=$1
             ;;
         -t)
             shift 1
             DO_TOKEN=$1
-            echo "do token: $DO_TOKEN "
             ;;
         -o)
             shift 1
@@ -110,7 +108,7 @@ else
 fi
 
 
-if [ -z "$REGION" ]; then
+if [ -z "$INPUT_REGION" ]; then
     echo "========================="
     echo "Getting regions from digitalocean"
     echo ""
@@ -123,7 +121,7 @@ if [ -z "$REGION" ]; then
     read INPUT_REGION
     export REGION=$INPUT_REGION
 else
-    export REGION=nyc1
+    export REGION=$INPUT_REGION
 fi
 
 if [ -z "$INPUT_NUM" ]; then
@@ -143,4 +141,7 @@ if [ -z "$DROPLET_NAME" ]; then
 fi
 
 NAME_PREFIX=$DROPLET_NAME
+export private_ip_file=$(mktemp "./private_ip.XXXXXX")
 for i in `seq $NUM_OF_DROPLETS`; do /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i"; done
+rm $private_ip_file
+rm ./output
