@@ -15,29 +15,15 @@ Full stack on Digital Ocean
 - [ ] configure DroneCI via fleet unit file (drone_conf.toml)
 - [ ] continuos deployment
 
-# Deploy steps
+# Setup Kubernetes
 
 ### STEP1) Setup digitalocean
-if you have exported DIGITAL_OCEAN_TOKEN than,
+
+Given that you already have exported DIGITAL_OCEAN_TOKEN,
 
 ```
 cd bin
 ./deploy.sh -n 3 -o <name> -t $DIGITAL_OCEAN_TOKEN -s 4gb
-
-```
-
-usage. if you don't know or don't have digitalocean token, visit [this page](https://www.digitalocean.com/community/tutorials/how-to-use-the-digitalocean-api-v2#how-to-generate-a-personal-access-token). And it's ok if you don't know SSH_KEY_ID. script will show the json result if you provide digitalocean token(read + write). just copy id and paste then hit enter.
-
-```
-Usage: $0 [-k ssh key id] [-t digitalocean v2 token] [-o droplet name prefix] [-n number of droplets] [-e etcd token] [-s droplet size]
-
-Options:
-    -k SSH_KEY_ID         SSH KEY ID on digitalocean. you need digitalocean token to get it.
-    -t DO_TOKEN           digitalocean api v2 token that has read/write permission
-    -o DROPLET_NAME       name prefix for droplets. core => core-1, core-2, core-3
-    -n INPUT_NUM          default 3
-    -e ETCD_TOKEN         without this option, we will get one by default
-    -s DROPLET_SIZE       512mb|1gb|2gb|4gb|8gb|16gb
 
 ```
 
@@ -58,6 +44,22 @@ It should look something like this when you're done entering your data.
 | @ | your.ip.address.k.thx | A (Address) | n/a | 60 |
 | www | http://your.domain | URL Redirect (301) | n/a | 60 |
 | * | your.ip.address.k.thx | A (Address) | n/a | 60 |
+
+# Deploy steps
+
+Add Dockerfile in your phoenix app
+
+```
+FROM 19hz/phoenix:latest
+MAINTAINER Jaigouk Kim @jaigouk
+
+WORKDIR /usr/src/app
+ENV SECRET_KEY_BASE=xxxx
+ENV DB_POOL_SIZE=20
+ENV PORT=4001
+EXPOSE 4001
+CMD ["mix", "phoenix.server"]
+```
 
 # References
 

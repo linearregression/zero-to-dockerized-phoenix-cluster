@@ -55,7 +55,6 @@ else
   echo "[NODE: $DROPLET_NAME]"
   echo "========================"
   MASTER_PRIVATE_IP=$(cat $private_ip_file)
-  echo $MASTER_PRIVATE_IP
   FILE_DATA=`cat ./node.yml`
   FILE_DATA=$(echo ${FILE_DATA} | sed "s/MASTER_PRIVATE_IP/${MASTER_PRIVATE_IP}/g")
   curl -X POST "https://api.digitalocean.com/v2/droplets" \
