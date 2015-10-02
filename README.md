@@ -24,82 +24,18 @@ and you already have installed docker-machine locally,
 
 ```
 cd bin
-./deploy.sh -n 3 -o <name> -t $DIGITAL_OCEAN_TOKEN -s 4gb
+./deploy.sh -n 3 -t $DIGITAL_OCEAN_TOKEN -s 4gb -r sgp1 -o <name>
 
 ```
 
 This will create 3 ditital ocean droplets 
 and create ssh key. 
 
-### STEP2) Fleetctl
+### STEP2) Kubernetes
 
-```
-brew install fleetctl
-```
+https://coreos.com/kubernetes/docs/latest/getting-started.html
 
-To get started on OSX run the following in a terminal:
-
-```
-curl -L  https://github.com/coreos/etcd/releases/download/v2.2.0/etcd-v2.2.0-darwin-amd64.zip -o etcd-v2.2.0-darwin-amd64.zip
-unzip etcd-v2.2.0-darwin-amd64.zip
-cd etcd-v2.2.0-darwin-amd64
-./etcd
-```
-
-Open another terminal:
-```
-./etcdctl set mykey "this is awesome"
-./etcdctl get mykey
-```
-
-#### TODO
-
-Need to grep DO env 
-
-```
-export DOCKER_TLS_VERIFY="1"
-export DOCKER_HOST="tcp://192.168.xxx.xxx:2376"
-export DOCKER_CERT_PATH="/Users/xxxx/.docker/machine/machines/dev"
-export DOCKER_MACHINE_NAME="dev"
-```
-
-and create `~/.docker/machine/my_machine/*` using 
-
-https://github.com/jaigouk/convert_pem_to_json
-
-https://github.com/jaigouk/zero-to-dockerized-meteor-cluster/blob/master/docs/details.md
-
-```
-├── cache
-│   └── boot2docker.iso
-├── certs
-│   ├── ca-key.pem
-│   ├── ca.pem
-│   ├── cert.pem
-│   └── key.pem
-└── machines
-    ├── dev
-    │   ├── boot2docker.iso
-    │   ├── ca.pem
-    │   ├── cert.pem
-    │   ├── config.json
-    │   ├── dev
-    │   ├── disk.vmdk
-    │   ├── id_rsa
-    │   ├── id_rsa.pub
-    │   ├── key.pem
-    │   ├── server-key.pem
-    │   └── server.pem
-    └── test-machine
-        ├── ca.pem
-        ├── cert.pem
-        ├── config.json
-        ├── id_rsa
-        ├── id_rsa.pub
-        ├── key.pem
-        ├── server-key.pem
-        └── server.pem
-```
+https://github.com/kubernetes/kubernetes/blob/release-1.0/docs/getting-started-guides/coreos/coreos_multinode_cluster.md
 
 ### STEP3) DNS Setup (namecheap)
 
@@ -134,6 +70,10 @@ CMD ["mix", "phoenix.server"]
 # References
 
 [Importing existing machines to docker-machine](https://blog.docker.com/2015/06/docker-machine-0-3-0-deep-dive/)
+
+[CoreOS Cloud config](https://github.com/coreos/coreos-cloudinit/blob/master/Documentation/cloud-config.md#users)
+
+[String Tricks that Bash Knows](http://spin.atomicobject.com/2014/02/16/bash-string-maniuplation/)
 
 [Giant swarm blog: Getting Started with Microservices using Ruby on Rails and Docker](http://blog.giantswarm.io/getting-started-with-microservices-using-ruby-on-rails-and-docker)
 

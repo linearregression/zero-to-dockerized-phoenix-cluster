@@ -15,6 +15,7 @@ write-files:
       private_ipv4: $private_ipv4
 coreos:
   etcd2:
+    discovery: "DISCOVERY_URL"
     listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
     advertise-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
     initial-cluster: master=http://MASTER_PRIVATE_IP:2380

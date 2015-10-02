@@ -24,6 +24,7 @@ hostname: master
 coreos:
   etcd2:
     name: master
+    discovery: "DISCOVERY_URL"
     listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
     advertise-client-urls: http://$private_ipv4:2379,http://$private_ipv4:4001
     initial-cluster-token: k8s_etcd

@@ -50,11 +50,16 @@ function work_on_droplet () {
   done
 }
 
+DISCOVERY_URL=`cat ./DISCOVERY_URL`
+DISCOVERY_URL2=`echo ${DISCOVERY_URL/https\:\/\//https\\\:\\\/\\\/}`
+DISCOVERY_URL3=`echo ${DISCOVERY_URL2/.io\//.io\\\/}`
+
 if [[ $DROPLET_NAME == *"-1"* ]]; then
   echo "========================"
   echo "[MASTER : $DROPLET_NAME]"
   echo "========================"
   FILE_DATA=`cat ./master.yml`
+  FILE_DATA=$(echo ${FILE_DATA} | sed "s/DISCOVERY_URL/${DISCOVERY_URL3}/g")
   work_on_droplet FILE_DATA "master"
 else
   echo ""
@@ -64,5 +69,6 @@ else
   MASTER_PRIVATE_IP=$(cat $private_ip_file)
   FILE_DATA=`cat ./node.yml`
   FILE_DATA=$(echo ${FILE_DATA} | sed "s/MASTER_PRIVATE_IP/${MASTER_PRIVATE_IP}/g")
+  FILE_DATA=$(echo ${FILE_DATA} | sed "s/DISCOVERY_URL/${DISCOVERY_URL3}/g")
   work_on_droplet FILE_DATA
 fi

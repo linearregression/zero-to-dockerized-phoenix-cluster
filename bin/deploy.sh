@@ -78,7 +78,6 @@ else
   export SIZE=$DROPLET_SIZE
 fi
 
-
 if [ -z "$DO_TOKEN" ]; then
     echo "Please input your token for Digital Ocean after -t option."
     echo "visit https://www.digitalocean.com/community/tutorials/how-to-use-the-digitalocean-api-v2#how-to-generate-a-personal-access-token"
@@ -101,16 +100,26 @@ else
   export SSH_KEY_ID=$INPUT_SSH_KEY_ID
 fi
 
+if [ -z "$INPUT_NUM" ]; then
+    echo "========================="
+    echo 'Number of droplets must be odd. (3, 5, 7 ..)'
+    echo "========================="
+    echo "Please input number of droplets :"
+    read INPUT_NUM_OF_DROPLETS
+    export NUM_OF_DROPLETS=$INPUT_NUM_OF_DROPLETS
+else
+    export NUM_OF_DROPLETS=$INPUT_NUM
+fi
+
 if [ -z "$ETCD_TOKEN" ]; then
-  export DISCOVERY_URL=`curl -fsS -X PUT https://discovery.etcd.io/new`
-  echo "saved etcd discovery url at ./bin/DISCOVERY_URL"
+  export DISCOVERY_URL=`curl https://discovery.etcd.io/new?size=$NUM_OF_DROPLETS`
   echo $DISCOVERY_URL > "./DISCOVERY_URL"
+  echo "saved etcd discovery url at ./bin/DISCOVERY_URL"
   echo "$DISCOVERY_URL"
 else
   export DISCOVERY_URL="https://discovery.etcd.io/$ETCD_TOKEN"
   echo "$DISCOVERY_URL"
 fi
-
 
 if [ -z "$INPUT_REGION" ]; then
     echo "========================="
@@ -126,17 +135,6 @@ if [ -z "$INPUT_REGION" ]; then
     export REGION=$INPUT_REGION
 else
     export REGION=$INPUT_REGION
-fi
-
-if [ -z "$INPUT_NUM" ]; then
-    echo "========================="
-    echo 'Number of droplets must be odd. (3, 5, 7 ..)'
-    echo "========================="
-    echo "Please input number of droplets :"
-    read INPUT_NUM_OF_DROPLETS
-    export NUM_OF_DROPLETS=$INPUT_NUM_OF_DROPLETS
-else
-    export NUM_OF_DROPLETS=$INPUT_NUM
 fi
 
 if [ -z "$DROPLET_NAME" ]; then
@@ -157,7 +155,6 @@ echo "========================="
 for i in `seq $NUM_OF_DROPLETS`; do
   /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i" "../ssh/$NAME_PREFIX.key.pub"
 done
-
 
 rm $private_ip_file
 rm $ssh_id_file
