@@ -152,8 +152,12 @@ export ssh_id_file=$(mktemp "./ssh_id.XXXXXX")
 echo "========================="
 echo "Creating ssh and upload to digital ocean"
 echo "========================="
-./ssh.sh
+./ssh.sh "$NAME_PREFIX"
 
-for i in `seq $NUM_OF_DROPLETS`; do /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i"; done
+for i in `seq $NUM_OF_DROPLETS`; do
+  /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i" "../ssh/$NAME_PREFIX.key.pub"
+done
+
+
 rm $private_ip_file
 rm $ssh_id_file

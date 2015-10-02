@@ -19,7 +19,8 @@ Full stack on Digital Ocean
 
 ### STEP1) Setup digitalocean
 
-Given that you already have exported DIGITAL_OCEAN_TOKEN,
+Given that you already have exported DIGITAL_OCEAN_TOKEN
+and you already have installed docker-machine locally,
 
 ```
 cd bin
@@ -27,16 +28,77 @@ cd bin
 
 ```
 
-### STEP2) Import instances via docker-machine
+This will create 3 ditital ocean droplets 
+and create ssh key. 
 
-https://blog.docker.com/2015/06/docker-machine-0-3-0-deep-dive/
+### STEP2) Fleetctl
 
 ```
- docker-machine create -d generic \
---generic-ssh-user core \
---generic-ssh-key ~/Downloads/manually_created_key.pub \
---generic-ip-address 12.34.56.78 \
-jungle
+brew install fleetctl
+```
+
+To get started on OSX run the following in a terminal:
+
+```
+curl -L  https://github.com/coreos/etcd/releases/download/v2.2.0/etcd-v2.2.0-darwin-amd64.zip -o etcd-v2.2.0-darwin-amd64.zip
+unzip etcd-v2.2.0-darwin-amd64.zip
+cd etcd-v2.2.0-darwin-amd64
+./etcd
+```
+
+Open another terminal:
+```
+./etcdctl set mykey "this is awesome"
+./etcdctl get mykey
+```
+
+#### TODO
+
+Need to grep DO env 
+
+```
+export DOCKER_TLS_VERIFY="1"
+export DOCKER_HOST="tcp://192.168.xxx.xxx:2376"
+export DOCKER_CERT_PATH="/Users/xxxx/.docker/machine/machines/dev"
+export DOCKER_MACHINE_NAME="dev"
+```
+
+and create `~/.docker/machine/my_machine/*` using 
+
+https://github.com/jaigouk/convert_pem_to_json
+
+https://github.com/jaigouk/zero-to-dockerized-meteor-cluster/blob/master/docs/details.md
+
+```
+├── cache
+│   └── boot2docker.iso
+├── certs
+│   ├── ca-key.pem
+│   ├── ca.pem
+│   ├── cert.pem
+│   └── key.pem
+└── machines
+    ├── dev
+    │   ├── boot2docker.iso
+    │   ├── ca.pem
+    │   ├── cert.pem
+    │   ├── config.json
+    │   ├── dev
+    │   ├── disk.vmdk
+    │   ├── id_rsa
+    │   ├── id_rsa.pub
+    │   ├── key.pem
+    │   ├── server-key.pem
+    │   └── server.pem
+    └── test-machine
+        ├── ca.pem
+        ├── cert.pem
+        ├── config.json
+        ├── id_rsa
+        ├── id_rsa.pub
+        ├── key.pem
+        ├── server-key.pem
+        └── server.pem
 ```
 
 ### STEP3) DNS Setup (namecheap)
@@ -71,7 +133,7 @@ CMD ["mix", "phoenix.server"]
 
 # References
 
-[Codeship Blog](http://blog.codeship.com/?s=docker)
+[Importing existing machines to docker-machine](https://blog.docker.com/2015/06/docker-machine-0-3-0-deep-dive/)
 
 [Giant swarm blog: Getting Started with Microservices using Ruby on Rails and Docker](http://blog.giantswarm.io/getting-started-with-microservices-using-ruby-on-rails-and-docker)
 
