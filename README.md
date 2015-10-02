@@ -17,7 +17,11 @@ Full stack on Digital Ocean
 
 # Setup Kubernetes
 
+https://coreos.com/os/docs/latest/generate-self-signed-certificates.html
+
+
 ### STEP1) Setup digitalocean
+
 
 Given that you already have exported DIGITAL_OCEAN_TOKEN
 and you already have installed docker-machine locally,
@@ -68,6 +72,8 @@ CMD ["mix", "phoenix.server"]
 ```
 
 # References
+
+[CFSSL-CloudFlare's PKI/TLS toolkit](https://github.com/cloudflare/cfssl)
 
 [Importing existing machines to docker-machine](https://blog.docker.com/2015/06/docker-machine-0-3-0-deep-dive/)
 
