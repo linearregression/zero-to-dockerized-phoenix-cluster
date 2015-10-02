@@ -16,11 +16,12 @@ write-files:
 coreos:
   etcd2:
     discovery: "DISCOVERY_URL"
-    listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
-    advertise-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
-    initial-cluster: master=http://MASTER_PRIVATE_IP:2380
+    listen-client-urls: "http://0.0.0.0:2379,http://0.0.0.0:4001"
+    advertise-client-urls: "http://0.0.0.0:2379,http://0.0.0.0:4001"
+    initial-cluster: "master=http://MASTER_PRIVATE_IP:2380"
     proxy: on
   fleet:
+    public-ip: "$public_ipv4"# used for fleetctl ssh command
     metadata: "role=node"
   units:
     - name: fleet.service
@@ -95,6 +96,40 @@ coreos:
         --healthz_port=10248
         Restart=always
         RestartSec=10
+    - name: docker.service
+      command: restart
+      content: |
+        [Unit]
+        Description=Docker Application Container Engine
+        Documentation=http://docs.docker.io
+        After=network.target
+        [Service]
+        ExecStartPre=/bin/mount --make-rprivate /
+        # Run docker but don't have docker automatically restart
+        # containers. This is a job for systemd and unit files.
+        ExecStart=/usr/bin/docker -d -s=btrfs -r=false -H fd:// -D
+        [Install]
+        WantedBy=multi-user.target
+    - name: docker-tcp.socket
+      command: start
+      enable: yes
+      content: |
+        [Unit]
+        Description=Docker Socket for the API
+        [Socket]
+        ListenStream=2376
+        BindIPv6Only=both
+        Service=docker.service
+        [Install]
+        WantedBy=sockets.target
+    - name: enable-docker-tcp.service
+      command: start
+      content: |
+        [Unit]
+        Description=Enable the Docker Socket for the API
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/bin/systemctl enable docker-tcp.socket
   update:
-    group: alpha
-    reboot-strategy: off
+    group: "alpha"
+    reboot-strategy: "off"
