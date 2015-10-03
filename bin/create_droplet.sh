@@ -2,7 +2,8 @@
 
 DROPLET_NAME=$1
 PUBLIC_SSH_KEY=$2
-
+ROOT_DIR=$3
+ROOT_DIR=`echo ${ROOT_DIR/\/\/\//\/}`
 FILE_DATA=""
 
 function create_droplet () {
@@ -45,6 +46,7 @@ function work_on_droplet () {
       if [ -n "$check_master" ] ; then
         echo $private_ip > "$private_ip_file"
       fi
+      $ROOT_DIR/cfssl/generate_server_certs.sh "$ROOT_DIR" "$public_ip, $DROPLET_NAME.local, $DROPLET_NAME" "$DROPLET_NAME"
       break
     fi
   done

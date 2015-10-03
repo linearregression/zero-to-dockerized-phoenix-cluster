@@ -144,16 +144,23 @@ fi
 
 
 NAME_PREFIX=$DROPLET_NAME
+export ROOT_DIR=`echo ${PWD/bin//}`
 export private_ip_file=$(mktemp "./private_ip.XXXXXX")
-export ssh_id_file=$(mktemp "./ssh_id.XXXXXX")
+export ssh_id_file=$(mktemp "$ROOT_DIR/ssh/ssh_id.XXXXXX")
+
 
 echo "========================="
 echo "Creating ssh and upload to digital ocean"
 echo "========================="
-./ssh.sh "$NAME_PREFIX"
+../ssh/ssh.sh "$NAME_PREFIX" $ROOT_DIR $ssh_id_file
+
+echo "========================="
+echo "Creating base certs"
+echo "========================="
+../cfssl/generate_certs.sh $ROOT_DIR
 
 for i in `seq $NUM_OF_DROPLETS`; do
-  /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i" "../ssh/$NAME_PREFIX.key.pub"
+  /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i" "../ssh/$NAME_PREFIX.key.pub" $ROOT_DIR
 done
 
 rm $private_ip_file

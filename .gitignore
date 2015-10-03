@@ -2,6 +2,11 @@ DISCOVERY_URL
 private_ip.*
 public_ip.*
 ssh/*
+*.key
+*.pub
+*.pem
+*.csr
+cfssl/certs/*
 
 # Logs
 logs
