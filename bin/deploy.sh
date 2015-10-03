@@ -160,7 +160,7 @@ echo "========================="
 ../cfssl/generate_certs.sh $ROOT_DIR
 
 for i in `seq $NUM_OF_DROPLETS`; do
-  /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i" "../ssh/$NAME_PREFIX.key.pub" $ROOT_DIR
+  /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i" "../ssh/$NAME_PREFIX.key" $ROOT_DIR
 done
 
 rm $private_ip_file

@@ -1,11 +1,54 @@
 #!/bin/sh
 
 DROPLET_NAME=$1
-PUBLIC_SSH_KEY=$2
+SSH_KEY=$2
 ROOT_DIR=$3
 ROOT_DIR=`echo ${ROOT_DIR/\/\/\//\/}`
 FILE_DATA=""
 
+function upload_certs () {
+  ip=$1
+  sleep 10;
+
+  DOCKER_CA_PEM="core.pem"
+  DOCKER_SERVER_PEM="$DROPLET_NAME.pem"
+  DOCKER_SERVER_KEY_PEM="$DROPLET_NAME-key.pem"
+  ROOT_DIR=`echo ${ROOT_DIR/\/\//\/}`
+
+  scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$ROOT_DIR/cfssl/certs/$DOCKER_SERVER_PEM" core@$ip:
+  scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$ROOT_DIR/cfssl/certs/$DOCKER_SERVER_KEY_PEM" core@$ip:
+  scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$ROOT_DIR/cfssl/certs/$DOCKER_CA_PEM" core@$ip:
+
+  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
+    "sudo mkdir /etc/docker/"
+
+  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
+    "sudo mv $DOCKER_SERVER_PEM /etc/docker/"
+  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
+    "sudo mv $DOCKER_SERVER_KEY_PEM /etc/docker/"
+  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
+    "sudo mv $DOCKER_CA_PEM /etc/docker/"
+
+  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
+    "sudo chown root:root /etc/docker/$DOCKER_SERVER_PEM"
+  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
+    "sudo chown root:root /etc/docker/$DOCKER_SERVER_KEY_PEM"
+  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
+    "sudo chown root:root /etc/docker/$DOCKER_CA_PEM"
+
+  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
+    "sudo chmod 0600 /etc/docker/$DOCKER_SERVER_KEY_PEM"
+
+  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
+    "sudo systemctl restart docker.service"
+  # mkdir ~/.docker
+  # chmod 700 ~/.docker
+  # cd ~/.docker
+  # cp -p ~/cfssl/ca.pem ca.pem
+  # cp -p ~/cfssl/client.pem cert.pem
+  # cp -p ~/cfssl/client-key.pem key.pem
+
+}
 function create_droplet () {
   data=$1
   new_ssh_id=$(cat $ssh_id_file)
@@ -47,6 +90,7 @@ function work_on_droplet () {
         echo $private_ip > "$private_ip_file"
       fi
       $ROOT_DIR/cfssl/generate_server_certs.sh "$ROOT_DIR" "$public_ip, $DROPLET_NAME.local, $DROPLET_NAME" "$DROPLET_NAME"
+      upload_certs "$public_ip"
       break
     fi
   done

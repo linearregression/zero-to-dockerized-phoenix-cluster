@@ -5,12 +5,12 @@
 path=$1
 
 #Generate CA and certificates
-echo '{"CN":"CA","key":{"algo":"rsa","size":4096}}' | \
+echo '{"CN":"CORE","key":{"algo":"rsa","size":4096}}' | \
 $path/cfssl/cfssl gencert -initca - | \
-$path/cfssl/cfssljson -bare $path/cfssl/certs/ca -
+$path/cfssl/cfssljson -bare $path/cfssl/certs/core -
 
 template=`cat $path/cfssl/ca-config-template.json`
-echo ${template} > $path/cfssl/certs/ca-config.json
+echo ${template} > $path/cfssl/certs/core-config.json
 
 #Verify data
 # openssl x509 -in ca.pem -text -noout
@@ -20,9 +20,9 @@ echo ${template} > $path/cfssl/certs/ca-config.json
 # client
 echo '{"CN":"client","hosts":[""],"key":{"algo":"rsa","size":4096}}' | \
 $path/cfssl/cfssl gencert \
--ca=$path/cfssl/certs/ca.pem \
--ca-key=$path/cfssl/certs/ca-key.pem \
--config=$path/cfssl/certs/ca-config.json \
+-ca=$path/cfssl/certs/core.pem \
+-ca-key=$path/cfssl/certs/core-key.pem \
+-config=$path/cfssl/certs/core-config.json \
 -profile=client - | \
 $path/cfssl/cfssljson -bare $path/cfssl/certs/client
 

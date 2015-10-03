@@ -1,7 +1,7 @@
 zero-to-dockerized-phoenix-cluster
 ----------------------------------
 
-CoreOS + Kubernetes + Phoenix on Digital Ocean
+CoreOS + Kubernetes + Phoenix on [Digital Ocean](https://www.digitalocean.com/?refcode=842fc3e1bfa6)
 
 # Goals
 
@@ -33,7 +33,7 @@ cd bin
 ```
 
 This will create 3 ditital ocean droplets 
-and create ssh key. 
+and create ssh key / cert files. 
 
 ### STEP2) Kubernetes
 
@@ -73,9 +73,7 @@ CMD ["mix", "phoenix.server"]
 
 # References
 
-[CFSSL-CloudFlare's PKI/TLS toolkit](https://github.com/cloudflare/cfssl)
-
-[Importing existing machines to docker-machine](https://blog.docker.com/2015/06/docker-machine-0-3-0-deep-dive/)
+[Generate Self Signed Certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
 
 [CoreOS Cloud config](https://github.com/coreos/coreos-cloudinit/blob/master/Documentation/cloud-config.md#users)
 
