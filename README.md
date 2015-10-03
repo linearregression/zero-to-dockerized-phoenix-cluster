@@ -3,7 +3,7 @@ zero-to-dockerized-phoenix-cluster
 
 CoreOS + Kubernetes + Phoenix on [Digital Ocean](https://www.digitalocean.com/?refcode=842fc3e1bfa6)
 
-| SW | VERSION | Specified file |
+| Tool | Version | Specified file |
 | --- | --- |  --- |
 | cores image | coreos-stable | bin/create_droplet.sh |
 | kube-apiserver | v0.19.3 | bin/master.yml node.yml |
