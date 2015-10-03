@@ -5,7 +5,7 @@ CoreOS + Kubernetes + Phoenix on [Digital Ocean](https://www.digitalocean.com/?r
 
 | Tool | Version | Specified file |
 | --- | --- |  --- |
-| cores image | coreos-stable | bin/create_droplet.sh |
+| CoreOS image | coreos-stable | bin/create_droplet.sh |
 | kube-apiserver | v0.19.3 | bin/master.yml node.yml |
 | kube-controller-manager | v0.19.3 | bin/master.yml node.yml |
 | kube-scheduler | v0.19.3 | bin/master.yml node.yml |
@@ -25,7 +25,7 @@ Full stack on Digital Ocean
 
 # Setup Kubernetes
 
-### STEP1) Setup digitalocean
+### STEP1) CoreOS cluster on digitalocean
 
 Given that you already have exported DIGITAL_OCEAN_TOKEN
 and you already have installed docker-machine locally,
@@ -61,7 +61,7 @@ It should look something like this when you're done entering your data.
 | www | http://your.domain | URL Redirect (301) | n/a | 60 |
 | * | your.ip.address.k.thx | A (Address) | n/a | 60 |
 
-# Deploy steps
+# Deploying your app
 
 Add Dockerfile in your phoenix app
 

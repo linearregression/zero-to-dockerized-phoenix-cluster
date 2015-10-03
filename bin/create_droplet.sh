@@ -6,6 +6,13 @@ ROOT_DIR=$3
 ROOT_DIR=`echo ${ROOT_DIR/\/\/\//\/}`
 FILE_DATA=""
 
+function cmd () {
+  remote=$1
+  todo=$2
+  ssh -o StrictHostKeyChecking=no \
+      -i "$SSH_KEY" core@$remote $todo
+}
+
 function upload_certs () {
   ip=$1
   sleep 10;
@@ -19,28 +26,19 @@ function upload_certs () {
   scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$ROOT_DIR/cfssl/certs/$DOCKER_SERVER_KEY_PEM" core@$ip:
   scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$ROOT_DIR/cfssl/certs/$DOCKER_CA_PEM" core@$ip:
 
-  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
-    "sudo mkdir /etc/docker/"
+  cmd $ip "sudo mkdir /etc/docker/"
 
-  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
-    "sudo mv $DOCKER_SERVER_PEM /etc/docker/"
-  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
-    "sudo mv $DOCKER_SERVER_KEY_PEM /etc/docker/"
-  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
-    "sudo mv $DOCKER_CA_PEM /etc/docker/"
+  cmd $ip "sudo mv $DOCKER_SERVER_PEM /etc/docker/"
+  cmd $ip "sudo mv $DOCKER_SERVER_KEY_PEM /etc/docker/"
+  cmd $ip "sudo mv $DOCKER_CA_PEM /etc/docker/"
 
-  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
-    "sudo chown root:root /etc/docker/$DOCKER_SERVER_PEM"
-  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
-    "sudo chown root:root /etc/docker/$DOCKER_SERVER_KEY_PEM"
-  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
-    "sudo chown root:root /etc/docker/$DOCKER_CA_PEM"
+  cmd $ip "sudo chown root:root /etc/docker/$DOCKER_SERVER_PEM"
+  cmd $ip "sudo chown root:root /etc/docker/$DOCKER_SERVER_KEY_PEM"
+  cmd $ip "sudo chown root:root /etc/docker/$DOCKER_CA_PEM"
 
-  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
-    "sudo chmod 0600 /etc/docker/$DOCKER_SERVER_KEY_PEM"
+  cmd $ip "sudo chmod 0600 /etc/docker/$DOCKER_SERVER_KEY_PEM"
 
-  ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
-    "sudo systemctl restart docker.service"
+  cmd $ip "sudo systemctl restart docker.service"
 
   # TODO
   #
@@ -60,6 +58,7 @@ function upload_certs () {
   # cp -p ~/cfssl/client-key.pem key.pem
 
 }
+
 function create_droplet () {
   data=$1
   new_ssh_id=$(cat $ssh_id_file)
