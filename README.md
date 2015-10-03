@@ -3,6 +3,14 @@ zero-to-dockerized-phoenix-cluster
 
 CoreOS + Kubernetes + Phoenix on [Digital Ocean](https://www.digitalocean.com/?refcode=842fc3e1bfa6)
 
+| SW | VERSION | Specified file |
+| --- | --- |
+| cores image | coreos-stable | bin/create_droplet.sh |
+| kube-apiserver | v0.19.3 | bin/master.yml node.yml |
+| kube-controller-manager | v0.19.3 | bin/master.yml node.yml |
+| kube-scheduler | v0.19.3 | bin/master.yml node.yml |
+
+
 # Goals
 
 Full stack on Digital Ocean
@@ -33,10 +41,11 @@ and create ssh key / cert files.
 
 ### STEP2) Kubernetes
 
-[x] [self signed certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
-[x] [customize docker](https://coreos.com/os/docs/latest/customizing-docker.html)
-[ ] [access docker hub](https://coreos.com/os/docs/latest/registry-authentication.html)
-[ ] [kubernetes](https://coreos.com/kubernetes/docs/latest/getting-started.html)
+[x] self signed certificates https://coreos.com/os/docs/latest/generate-self-signed-certificates.html
+[x] customize docker https://coreos.com/os/docs/latest/customizing-docker.html
+[ ] access docker hub https://coreos.com/os/docs/latest/registry-authentication.html
+[ ] kubernetes https://coreos.com/kubernetes/docs/latest/getting-started.html
+[ ] Set docker machine dir
 
 ### STEP3) DNS Setup (namecheap)
 

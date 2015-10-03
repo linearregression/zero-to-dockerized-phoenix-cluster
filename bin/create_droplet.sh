@@ -41,6 +41,17 @@ function upload_certs () {
 
   ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" core@$ip \
     "sudo systemctl restart docker.service"
+
+  # TODO
+  #
+  # Copy certs to docker-machine dir with a json template
+  # Make sure docker-machine sets docker env properly.
+  #
+  # export DOCKER_TLS_VERIFY="1"
+  # export DOCKER_HOST="tcp://192.168.99.100:2376"
+  # export DOCKER_CERT_PATH="~/.docker/machine/machines/dev"
+  # export DOCKER_MACHINE_NAME="dev"
+  #
   # mkdir ~/.docker
   # chmod 700 ~/.docker
   # cd ~/.docker
