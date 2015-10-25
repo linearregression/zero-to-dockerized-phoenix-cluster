@@ -3,11 +3,13 @@
 # https://coreos.com/os/docs/latest/generate-self-signed-certificates.html
 
 path=$1
+path=`echo ${path/\/\/\//\/}`
+echo $path
 
 #Generate CA and certificates
-echo '{"CN":"CORE","key":{"algo":"rsa","size":4096}}' | \
-$path/cfssl/cfssl gencert -initca - | \
-$path/cfssl/cfssljson -bare $path/cfssl/certs/core -
+echo '{"CN":"core","key":{"algo":"rsa","size":4096}}' | \
+  $path/cfssl/cfssl gencert -initca - | \
+  $path/cfssl/cfssljson -bare $path/cfssl/certs/core -
 
 template=`cat $path/cfssl/ca-config-template.json`
 echo ${template} > $path/cfssl/certs/core-config.json
@@ -25,5 +27,3 @@ $path/cfssl/cfssl gencert \
 -config=$path/cfssl/certs/core-config.json \
 -profile=client - | \
 $path/cfssl/cfssljson -bare $path/cfssl/certs/client
-
-

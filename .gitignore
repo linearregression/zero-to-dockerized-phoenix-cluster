@@ -5,6 +5,8 @@ public_ip.*
 *.pub
 *.pem
 *.csr
-cfssl/certs/*
+cfssl/certs/*.pem
+cfssl/certs/*.csr
+cfssl/certs/*.json
 moduli.*
 /ssh/ssh_*

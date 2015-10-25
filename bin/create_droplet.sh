@@ -61,7 +61,7 @@ function upload_certs () {
   # docker config
   cmd $ip "sudo mkdir /home/core/.docker"
   cmd $ip "sudo mv /home/core/config.json /home/core/.docker/"
-  cmd $ip "sudo chown core:core /home/core/.docker/config"
+  cmd $ip "sudo chown -R core:core /home/core/.docker"
   cmd $ip "sudo chmod 0600 /home/core/.docker/config"
 
   # restart docker
@@ -166,7 +166,6 @@ if [[ $DROPLET_NAME == *"-1"* ]]; then
   echo "========================"
   echo "[MASTER : $DROPLET_NAME]"
   echo "========================"
-
   FILE_DATA=$(change_yml_file "master")
   work_on_droplet FILE_DATA "master"
 else
