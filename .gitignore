@@ -9,4 +9,4 @@ cfssl/certs/*.pem
 cfssl/certs/*.csr
 cfssl/certs/*.json
 moduli.*
-/ssh/ssh_*
+ssh/ssh_*

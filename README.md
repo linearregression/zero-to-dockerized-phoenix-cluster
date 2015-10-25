@@ -44,9 +44,9 @@ and create ssh key / cert files.
 ### STEP2) Kubernetes
 
 - [x] [self signed certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
-- [x] [customize docker](https://coreos.com/os/docs/latest/customizing-docker.html)
+- [x] [docker TLS auth using self signed certificates](https://coreos.com/os/docs/latest/customizing-docker.html)
 - [x] [access docker hub](https://coreos.com/os/docs/latest/registry-authentication.html) and here is [the issue](https://github.com/coreos/bugs/issues/820)
-- [ ] [kubernetes](https://coreos.com/kubernetes/docs/latest/getting-started.html)
+- [ ] [kubernetes](https://github.com/kubernetes/kubernetes/blob/release-1.0/docs/getting-started-guides/coreos.md)
 - [ ] Set docker machine dir
 
 ### STEP3) DNS Setup (namecheap)

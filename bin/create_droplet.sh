@@ -8,6 +8,25 @@ ROOT_DIR=`echo ${ROOT_DIR/\/\/\//\/}`
 FILE_DATA=""
 USER_HOME=$(eval echo ~${SUDO_USER})
 
+function change_yml_file () {
+  check_master=$1
+
+  if [[ "$check_master" == "master" ]] ; then
+    YML_FILE=`cat ./master.yml`
+  else
+    YML_FILE=`cat ./node.yml`
+    MASTER_PRIVATE_IP=$(cat $private_ip_file)
+    YML_FILE=$(echo ${YML_FILE} | sed "s/MASTER_PRIVATE_IP/${MASTER_PRIVATE_IP}/g")
+  fi
+
+  DISCOVERY_URL=`cat $ROOT_DIR/bin/DISCOVERY_URL`
+  DISCOVERY_URL2=`echo ${DISCOVERY_URL/https\:\/\//https\\\:\\\/\\\/}`
+  DISCOVERY_URL3=`echo ${DISCOVERY_URL2/.io\//.io\\\/}`
+
+  YML_FILE=$(echo ${YML_FILE} | sed "s/DISCOVERY_URL/${DISCOVERY_URL3}/g")
+  echo $YML_FILE
+}
+
 function cmd () {
   remote=$1
   todo=$2
@@ -134,32 +153,6 @@ function work_on_droplet () {
       break
     fi
   done
-}
-
-function change_yml_file () {
-  check_master=$1
-
-  if [[ "$check_master" == "master" ]] ; then
-    YML_FILE=`cat ./master.yml`
-  else
-    YML_FILE=`cat ./node.yml`
-    MASTER_PRIVATE_IP=$(cat $private_ip_file)
-    YML_FILE=$(echo ${YML_FILE} | sed "s/MASTER_PRIVATE_IP/${MASTER_PRIVATE_IP}/g")
-  fi
-
-  DISCOVERY_URL=`cat ./DISCOVERY_URL`
-  DISCOVERY_URL2=`echo ${DISCOVERY_URL/https\:\/\//https\\\:\\\/\\\/}`
-  DISCOVERY_URL3=`echo ${DISCOVERY_URL2/.io\//.io\\\/}`
-  SSH_MODULI_DATA=`cat $ROOT_DIR/ssh/moduli.safe`
-  HOST_ED25519_KEY=`cat $ROOT_DIR/ssh/ssh_host_ed25519_key`
-  HOST_RSA_KEY=`cat $ROOT_DIR/ssh/ssh_host_rsa_key`
-
-  YML_FILE=$(echo ${YML_FILE} | sed "s/DISCOVERY_URL/${DISCOVERY_URL3}/g")
-  YML_FILE=$(echo ${YML_FILE} | sed "s/SSH_MODULI_DATA/${SSH_MODULI_DATA}/g")
-  YML_FILE=$(echo ${YML_FILE} | sed "s/HOST_ED25519_KEY/${HOST_ED25519_KEY}/g")
-  YML_FILE=$(echo ${YML_FILE} | sed "s/HOST_RSA_KEY/${HOST_RSA_KEY}/g")
-
-  echo $YML_FILE
 }
 
 if [[ $DROPLET_NAME == *"-1"* ]]; then
