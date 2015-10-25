@@ -46,8 +46,15 @@ and create ssh key / cert files.
 - [x] [self signed certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
 - [x] [docker TLS auth using self signed certificates](https://coreos.com/os/docs/latest/customizing-docker.html)
 - [x] [access docker hub](https://coreos.com/os/docs/latest/registry-authentication.html) and here is [the issue](https://github.com/coreos/bugs/issues/820)
-- [ ] [kubernetes](https://github.com/kubernetes/kubernetes/blob/release-1.0/docs/getting-started-guides/coreos.md)
+- [ ] [kubernetes](http://www.livewyer.com/blog/2015/05/20/deploying-kubernetes-digitalocean)
+- [ ] [pass kubernetes conformance tests](https://coreos.com/kubernetes/docs/latest/conformance-tests.html)
 - [ ] Set docker machine dir
+
+you can access your instance by ssh into it.
+
+```
+ssh -i ~/.ssh/core.pem core@xx.xx.xx.xx
+```
 
 ### STEP3) DNS Setup (namecheap)
 
