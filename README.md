@@ -16,12 +16,14 @@ CoreOS + Kubernetes + Phoenix on [Digital Ocean](https://www.digitalocean.com/?r
 Full stack on Digital Ocean
 
 - [x] dockerize Phoenix app
+- [x] [more secure sshd](https://stribika.github.io/2015/01/04/secure-secure-shell.html)
 - [ ] Postgresql cluster
 - [ ] dockerize NGINX
 - [ ] app registration discovery for nginx load balancer(done by confd)
 - [ ] use vulcand instead of nginx load balancer
 - [ ] configure DroneCI via fleet unit file (drone_conf.toml)
 - [ ] continuos deployment
+- [ ] [aws support](http://docs.deis.io/en/latest/installing_deis/aws/)
 
 # Setup Kubernetes
 
@@ -43,7 +45,7 @@ and create ssh key / cert files.
 
 - [x] [self signed certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
 - [x] [customize docker](https://coreos.com/os/docs/latest/customizing-docker.html)
-- [ ] [access docker hub](https://coreos.com/os/docs/latest/registry-authentication.html)
+- [x] [access docker hub](https://coreos.com/os/docs/latest/registry-authentication.html) and here is [the issue](https://github.com/coreos/bugs/issues/820)
 - [ ] [kubernetes](https://coreos.com/kubernetes/docs/latest/getting-started.html)
 - [ ] Set docker machine dir
 
@@ -78,6 +80,9 @@ CMD ["mix", "phoenix.server"]
 ```
 
 # References
+
+
+https://www.turnkeylinux.org/blog/shell-error-handling
 
 [Generate Self Signed Certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
 

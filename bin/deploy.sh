@@ -1,18 +1,18 @@
 #!/bin/sh
 set -e
-INPUT_SSH_KEY_ID=""
-DROPLET_NAME=""
-INPUT_NUM_OF_DROPLETS=""
-INPUT_REGION=""
-REGION=""
-ETCD_TOKEN=""
-SIZE=""
-DROPLET_SIZE=""
-INPUT_DROPLET_SIZE=""
-MASTER_PRIVATE_IP=""
-key_file=""
-pub_file=""
-SSH_ID=""
+INPUT_SSH_KEY_ID=0
+DROPLET_NAME=0
+INPUT_NUM_OF_DROPLETS=0
+INPUT_REGION=0
+REGION=0
+ETCD_TOKEN=0
+SIZE=0
+DROPLET_SIZE=0
+INPUT_DROPLET_SIZE=0
+MASTER_PRIVATE_IP=0
+key_file=0
+pub_file=0
+SSH_ID=0
 
 USAGE="Usage: $0 [-k ssh key id] [-t digitalocean v2 token] [-o droplet name prefix] [-n number of droplets] [-e etcd token] [-s droplet size]
 Options:

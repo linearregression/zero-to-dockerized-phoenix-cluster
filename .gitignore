@@ -6,6 +6,8 @@ public_ip.*
 *.pem
 *.csr
 cfssl/certs/*
+moduli.*
+/ssh/ssh_*
 
 # Logs
 logs
