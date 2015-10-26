@@ -6,13 +6,18 @@ path=$1
 path=`echo ${path/\/\/\//\/}`
 echo $path
 
-#Generate CA and certificates
-echo '{"CN":"core","key":{"algo":"rsa","size":4096}}' | \
+# For kubernetes admin
+echo '{"CN":"admin","key":{"algo":"rsa","size":4096}}' | \
   $path/cfssl/cfssl gencert -initca - | \
-  $path/cfssl/cfssljson -bare $path/cfssl/certs/core -
+  $path/cfssl/cfssljson -bare $path/cfssl/certs/admin -
+
+#Generate CA and certificates
+echo '{"CN":"ca","key":{"algo":"rsa","size":4096}}' | \
+  $path/cfssl/cfssl gencert -initca - | \
+  $path/cfssl/cfssljson -bare $path/cfssl/certs/ca -
 
 template=`cat $path/cfssl/ca-config-template.json`
-echo ${template} > $path/cfssl/certs/core-config.json
+echo ${template} > $path/cfssl/certs/ca-config.json
 
 #Verify data
 # openssl x509 -in ca.pem -text -noout
@@ -22,8 +27,8 @@ echo ${template} > $path/cfssl/certs/core-config.json
 # client
 echo '{"CN":"client","hosts":[""],"key":{"algo":"rsa","size":4096}}' | \
 $path/cfssl/cfssl gencert \
--ca=$path/cfssl/certs/core.pem \
--ca-key=$path/cfssl/certs/core-key.pem \
--config=$path/cfssl/certs/core-config.json \
+-ca=$path/cfssl/certs/ca.pem \
+-ca-key=$path/cfssl/certs/ca-key.pem \
+-config=$path/cfssl/certs/ca-config.json \
 -profile=client - | \
 $path/cfssl/cfssljson -bare $path/cfssl/certs/client

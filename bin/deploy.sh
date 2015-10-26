@@ -16,10 +16,12 @@ MASTER_PRIVATE_IP=""
 key_file=""
 pub_file=""
 SSH_ID=""
-
+TECH_VERSION=""
+INPUT_TECH_VERSION=""
 
 USAGE="Usage: $0 [-k ssh key id] [-t digitalocean v2 token] [-o droplet name prefix] [-n number of droplets] [-e etcd token] [-s droplet size]
 Options:
+    -v VERSION            choose edge / stable version of coreos and kubernetes
     -k SSH_KEY_ID         SSH KEY ID on digitalocean. you need digitalocean token to get it.
     -r REGION             region
     -t DO_TOKEN           digitalocean api v2 token that has read/write permission
@@ -31,6 +33,10 @@ Options:
 
 while [ "$#" -gt 0 ]; do
     case $1 in
+        -v)
+            shift 1
+            TECH_VERSION=$1
+            ;;
         -k)
             shift 1
             INPUT_SSH_KEY_ID=$1
@@ -71,9 +77,20 @@ while [ "$#" -gt 0 ]; do
     shift 1
 done
 
+if ! echo $TECH_VERSION | grep -qE 'stable|edge'; then
+    echo "========================="
+    echo 'TECH_VERSION must be one of stable|edge'
+    echo "========================="
+    echo "Please input your TECH_VERSION :"
+    read INPUT_TECH_VERSION
+    export TECH_VERSION=$INPUT_TECH_VERSION
+else
+  export TECH_VERSION=$TECH_VERSION
+fi
+
 if ! echo $DROPLET_SIZE | grep -qE '512mb|1gb|2gb|4gb|8gb|16gb'; then
     echo "========================="
-    echo 'DROPLET_SIZE must be 512mb|1gb|2gb|4gb|8gb|16gb'
+    echo 'DROPLET_SIZE must be one of 512mb|1gb|2gb|4gb|8gb|16gb'
     echo "========================="
     echo "Please input your DROPLET_SIZE :"
     read INPUT_DROPLET_SIZE
@@ -164,7 +181,7 @@ echo "========================="
 ../cfssl/generate_certs.sh $ROOT_DIR
 
 for i in `seq $NUM_OF_DROPLETS`; do
-  /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i" "../ssh/$NAME_PREFIX.key" $ROOT_DIR
+  /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i" "../ssh/$NAME_PREFIX.key" $ROOT_DIR $TECH_VERSION
 done
 
 rm $private_ip_file

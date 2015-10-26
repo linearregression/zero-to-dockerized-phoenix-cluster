@@ -10,6 +10,7 @@ CoreOS + Kubernetes + Phoenix on [Digital Ocean](https://www.digitalocean.com/?r
 | kube-controller-manager | v0.19.3 | bin/master.yml node.yml |
 | kube-scheduler | v0.19.3 | bin/master.yml node.yml |
 
+# WARNING : THIS REPO IS NOT FULLY TESTED YET(COREOS PART IS FINE).
 
 # Goals
 
@@ -34,7 +35,7 @@ and you already have installed docker-machine locally,
 
 ```
 cd bin
-./deploy.sh -n 3 -t $DIGITAL_OCEAN_TOKEN -s 4gb -r sgp1 -o <name>
+./deploy.sh -v edge -n 3 -t $DIGITAL_OCEAN_TOKEN -s 4gb -r sgp1 -o <name>
 
 ```
 
@@ -43,17 +44,20 @@ and create ssh key / cert files.
 
 ### STEP2) Kubernetes
 
+NEED TO USE PLAIN SERVER FILES INTEAD OF USING CLOUD-CONFIG 
+https://github.com/mhamrah/kubernetes-coreos-units
+
 - [x] [self signed certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
 - [x] [docker TLS auth using self signed certificates](https://coreos.com/os/docs/latest/customizing-docker.html)
 - [x] [access docker hub](https://coreos.com/os/docs/latest/registry-authentication.html) and here is [the issue](https://github.com/coreos/bugs/issues/820)
-- [ ] [kubernetes](http://www.livewyer.com/blog/2015/05/20/deploying-kubernetes-digitalocean)
-- [ ] [pass kubernetes conformance tests](https://coreos.com/kubernetes/docs/latest/conformance-tests.html)
+- [x] [kubernetes](http://www.livewyer.com/blog/2015/05/20/deploying-kubernetes-digitalocean)
+- [x] [pass kubernetes conformance tests](https://coreos.com/kubernetes/docs/latest/conformance-tests.html)
 - [ ] Set docker machine dir
 
 you can access your instance by ssh into it.
 
 ```
-ssh -i ~/.ssh/core.pem core@xx.xx.xx.xx
+ssh -i ~/.ssh/ca.pem core@xx.xx.xx.xx
 ```
 
 ### STEP3) DNS Setup (namecheap)
@@ -90,6 +94,8 @@ CMD ["mix", "phoenix.server"]
 
 
 https://www.turnkeylinux.org/blog/shell-error-handling
+
+[HDFS vs Ceph vs GlusterFS](http://iopscience.iop.org/article/10.1088/1742-6596/513/4/042014/pdf)
 
 [Generate Self Signed Certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
 

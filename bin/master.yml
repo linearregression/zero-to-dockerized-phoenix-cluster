@@ -40,7 +40,12 @@ write-files:
           HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com,ssh-rsa-cert-v01@openssh.com,ssh-ed25519,ssh-rsa
           Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
           MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-ripemd160-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160,umac-128@openssh.com
+
 hostname: master
+update:
+    group: "alpha"
+    reboot-strategy: "off"
+
 coreos:
   etcd2:
     name: master
@@ -52,23 +57,39 @@ coreos:
     initial-advertise-peer-urls: "http://$private_ipv4:2380"
     initial-cluster: "master=http://$private_ipv4:2380"
     initial-cluster-state: "new"
+
   fleet:
     public-ip: "$public_ipv4"# used for fleetctl ssh command
     metadata: "role=master"
+    etcd_servers: http://$public_ipv4:2379
+
+  flannel:
+    interface: $public_ipv4
+    etcd_prefix: /coreos.com/network
+    etcd_endpoints: http://$public_ipv4:2379
+
   units:
-    - name: generate-serviceaccount-key.service
+    - name: fleet.service
       command: start
-      content: |
-        [Unit]
-        Description=Generate service-account key file
-        [Service]
-        ExecStartPre=-/usr/bin/mkdir -p /opt/bin
-        ExecStart=/bin/openssl genrsa -out /opt/bin/kube-serviceaccount.key 2048 2>/dev/null
-        RemainAfterExit=yes
-        Type=oneshot
+    - name: flanneld.service
+      command: start
+      drop-ins:
+        - name: 50-network-config.conf
+          content: |
+            [Unit]
+            Requires=etcd2.service
+            [Service]
+            ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config '{"Network":"10.244.0.0/16", "Backend": {"Type": "vxlan"}}'
+
     - name: setup-network-environment.service
       command: start
       content: |
+        # we can use default ipv4 env var
+        #
+        # LO_IPV4=127.0.0.1
+        # ENO16777736_IPV4=192.168.12.10
+        # DEFAULT_IPV4=192.168.12.10
+        #
         [Unit]
         Description=Setup Network Environment
         Documentation=https://github.com/kelseyhightower/setup-network-environment
@@ -81,29 +102,115 @@ coreos:
         ExecStart=/opt/bin/setup-network-environment
         RemainAfterExit=yes
         Type=oneshot
-    - name: fleet.service
-      command: start
-    - name: flanneld.service
-      command: start
+
+    - name: docker.service
       drop-ins:
-        - name: 50-network-config.conf
+        - name: 10-tls-verify.conf
+          content: |
+            [Service]
+            Environment="DOCKER_OPTS=-H=0.0.0.0:2376 --tlsverify --tlscacert=/etc/kubernetes/ssl/ca.pem --tlscert=/etc/kubernetes/ssl/server.pem --tlskey=/etc/docker/ssl/server-key.pem"
+        - name: 40-flannel.conf
           content: |
             [Unit]
-            Requires=etcd2.service
-            [Service]
-            ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config '{"Network":"10.244.0.0/16", "Backend": {"Type": "vxlan"}}'
+            Requires=flanneld.service
+            After=flanneld.service
+      command: restart
+      content: |
+        [Unit]
+        Description=Docker Application Container Engine
+        Documentation=http://docs.docker.io
+        After=network.target
+        [Service]
+        ExecStartPre=/bin/mount --make-rprivate /
+        # Run docker but don't have docker automatically restart
+        # containers. This is a job for systemd and unit files.
+        ExecStart=/usr/bin/docker -d -s=btrfs -r=false -H fd:// -D
+        [Install]
+        WantedBy=multi-user.target
+    - name: docker-tcp.socket
+      command: start
+      enable: yes
+      content: |
+        [Unit]
+        Description=Docker Socket for the API
+        [Socket]
+        ListenStream=2376
+        BindIPv6Only=both
+        Service=docker.service
+        [Install]
+        WantedBy=sockets.target
+    - name: enable-docker-tcp.service
+      command: start
+      content: |
+        [Unit]
+        Description=Enable the Docker Socket for the API
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/bin/systemctl enable docker-tcp.socket
+
+    - name: download-kubernetes.service
+      enable: true
+      command: start
+      content: |
+        [Unit]
+        After=network-online.target
+        Description=Download Kubernetes Binaries
+        Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+        Requires=network-online.target
+        [Service]
+        Environment=KUBE_RELEASE_TARBALL=KUBE_RELEASE_TARBALL_URL
+        ExecStartPre=/bin/mkdir -p /opt/bin/
+        ExecStart=/bin/bash -c "curl -s -L $KUBE_RELEASE_TARBALL | tar xzv -C /tmp/"
+        ExecStart=/bin/tar xzvf /tmp/kubernetes/server/kubernetes-server-linux-amd64.tar.gz -C /opt
+        ExecStartPost=/bin/ln -s /opt/kubernetes/server/bin/kubectl /opt/bin/
+        ExecStartPost=/bin/mv /tmp/kubernetes/examples/guestbook /home/core/guestbook-example
+        ExecStartPost=/bin/rm -rf /tmp/kubernetes
+        ExecStartPost=/usr/bin/chmod -R a+r /opt/kubernetes
+        ExecStartPost=/usr/bin/chmod -R a+x /opt/kubernetes
+        RemainAfterExit=yes
+        Type=oneshot
+
+    - name: kube-kubelet.service
+      command: start
+      content: |
+        [Unit]
+        Description=Kubernetes Kubelet
+        Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+        Requires=setup-network-environment.service
+        After=setup-network-environment.service
+        After=download-kubernetes.service
+        [Service]
+        EnvironmentFile=/etc/network-environment
+        ExecStartPre=/usr/bin/chmod +x /opt/bin/kubelet
+        # wait for kubernetes master to be up and ready
+        ExecStart=/opt/bin/kubelet \
+        --api_servers=http://127.0.0.1:8080 \
+        --register-node=false \
+        --allow-privileged=true \
+        --hostname-override=${DEFAULT_IPV4} \
+        --cadvisor_port=4194 \
+        --address=0.0.0.0 \
+        --port=10250 \
+        --allow_privileged=true \
+        --logtostderr=true \
+        --healthz_bind_address=0.0.0.0 \
+        --healthz_port=10248
+        Restart=always
+        RestartSec=10
+        [Install]
+        WantedBy=multi-user.target
     - name: kube-apiserver.service
       command: start
       content: |
         [Unit]
         Description=Kubernetes API Server
         Documentation=https://github.com/GoogleCloudPlatform/kubernetes
-        Requires=setup-network-environment.service etcd2.service generate-serviceaccount-key.service
-        After=setup-network-environment.service etcd2.service generate-serviceaccount-key.service
+        Requires=setup-network-environment.service etcd2.service
+        After=setup-network-environment.service etcd2.service
+        After=download-kubernetes.service
         [Service]
         EnvironmentFile=/etc/network-environment
         ExecStartPre=-/usr/bin/mkdir -p /opt/bin
-        ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-apiserver -z /opt/bin/kube-apiserver https://storage.googleapis.com/kubernetes-release/release/v0.19.3/bin/linux/amd64/kube-apiserver
         ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-apiserver
         ExecStartPre=/opt/bin/wupiao 127.0.0.1:2379/v2/machines
         ExecStart=/opt/bin/kube-apiserver \
@@ -118,7 +225,7 @@ coreos:
         --secure_port=6443 \
         --service-cluster-ip-range=10.100.0.0/16 \
         --etcd_servers=http://127.0.0.1:2379 \
-        --public_address_override=${DEFAULT_IPV4} \
+        --public_address_override=$public_ipv4 \
         --logtostderr=true
         Restart=always
         RestartSec=10
@@ -153,45 +260,3 @@ coreos:
         ExecStart=/opt/bin/kube-scheduler --master=127.0.0.1:8080
         Restart=always
         RestartSec=10
-    - name: docker.service
-      drop-ins:
-        - name: 10-tls-verify.conf
-          content: |
-            [Service]
-            Environment="DOCKER_OPTS=-H=0.0.0.0:2376 --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem"
-      command: restart
-      content: |
-        [Unit]
-        Description=Docker Application Container Engine
-        Documentation=http://docs.docker.io
-        After=network.target
-        [Service]
-        ExecStartPre=/bin/mount --make-rprivate /
-        # Run docker but don't have docker automatically restart
-        # containers. This is a job for systemd and unit files.
-        ExecStart=/usr/bin/docker -d -s=btrfs -r=false -H fd:// -D
-        [Install]
-        WantedBy=multi-user.target
-    - name: docker-tcp.socket
-      command: start
-      enable: yes
-      content: |
-        [Unit]
-        Description=Docker Socket for the API
-        [Socket]
-        ListenStream=2376
-        BindIPv6Only=both
-        Service=docker.service
-        [Install]
-        WantedBy=sockets.target
-    - name: enable-docker-tcp.service
-      command: start
-      content: |
-        [Unit]
-        Description=Enable the Docker Socket for the API
-        [Service]
-        Type=oneshot
-        ExecStart=/usr/bin/systemctl enable docker-tcp.socket
-  update:
-    group: "alpha"
-    reboot-strategy: "off"

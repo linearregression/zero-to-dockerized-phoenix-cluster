@@ -3,6 +3,7 @@
 DROPLET_NAME=$1
 SSH_KEY=$2
 ROOT_DIR=$3
+TECH_VERSION=$4
 
 ROOT_DIR=`echo ${ROOT_DIR/\/\/\//\/}`
 FILE_DATA=""
@@ -17,6 +18,12 @@ function change_yml_file () {
     YML_FILE=`cat ./node.yml`
     MASTER_PRIVATE_IP=$(cat $private_ip_file)
     YML_FILE=$(echo ${YML_FILE} | sed "s/MASTER_PRIVATE_IP/${MASTER_PRIVATE_IP}/g")
+  fi
+
+  if [[ "$TECH_VERSION" == "edge" ]] ; then
+    KUBE_RELEASE_TARBALL_URL="https://github.com/kubernetes/kubernetes/releases/download/v1.2.0-alpha.2/kubernetes.tar.gz"
+  else
+    KUBE_RELEASE_TARBALL_URL="https://github.com/kubernetes/kubernetes/releases/download/v1.0.6/kubernetes.tar.gz"
   fi
 
   DISCOVERY_URL=`cat $ROOT_DIR/bin/DISCOVERY_URL`
@@ -54,28 +61,39 @@ function upload_ssh_files () {
 
 function upload_certs () {
   ip=$1
+  ROOT_DIR=`echo ${ROOT_DIR/\/\//\/}`
   sleep 10;
 
-  DOCKER_CFG=`cat $USER_HOME/.docker/config.json`
-  DOCKER_CA_PEM="core.pem"
-  DOCKER_SERVER_PEM="$DROPLET_NAME.pem"
-  DOCKER_SERVER_KEY_PEM="$DROPLET_NAME-key.pem"
-  ROOT_DIR=`echo ${ROOT_DIR/\/\//\/}`
+  DOCKER_CFG="$USER_HOME/.docker/config.json"
+  KUBE_MANIFESTS="$ROOT_DIR/bin/kube-apiserver.yml"
 
-  scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$ROOT_DIR/cfssl/certs/$DOCKER_SERVER_PEM" core@$ip:
-  scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$ROOT_DIR/cfssl/certs/$DOCKER_SERVER_KEY_PEM" core@$ip:
-  scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$ROOT_DIR/cfssl/certs/$DOCKER_CA_PEM" core@$ip:
+
+  if [[ $NAME == *"-1"* ]]; then
+    S_ROLE="server"
+  else
+    S_ROLE="client-server"
+  fi
+  SERVER_PEM="$NAME.pem"
+  SERVER_KEY_PEM="$S_ROLE-key.pem"
+  CA_PEM="ca.pem"
+  KUBE="kube-apiserver.yml"
+
+  scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$ROOT_DIR/cfssl/certs/$SERVER_PEM" core@$ip:
+  scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$ROOT_DIR/cfssl/certs/$SERVER_KEY_PEM" core@$ip:
+  scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$ROOT_DIR/cfssl/certs/$CA_PEM" core@$ip:
   scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$DOCKER_CFG" core@$ip:
+  scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$KUBE_MANIFESTS" core@$ip:
 
   # docker tls related files
-  cmd $ip "sudo mkdir /etc/docker/"
-  cmd $ip "sudo mv $DOCKER_SERVER_PEM /etc/docker/"
-  cmd $ip "sudo mv $DOCKER_SERVER_KEY_PEM /etc/docker/"
-  cmd $ip "sudo mv $DOCKER_CA_PEM /etc/docker/"
-  cmd $ip "sudo chown root:root /etc/docker/$DOCKER_SERVER_PEM"
-  cmd $ip "sudo chown root:root /etc/docker/$DOCKER_SERVER_KEY_PEM"
-  cmd $ip "sudo chown root:root /etc/docker/$DOCKER_CA_PEM"
-  cmd $ip "sudo chmod 0600 /etc/docker/$DOCKER_SERVER_KEY_PEM"
+  cmd $ip "sudo mkdir -p /etc/kubernetes/ssl"
+  cmd $ip "sudo mkdir -p /etc/kubernetes/manifests/"
+
+  cmd $ip "sudo mv $KUBE /etc/kubernetes/ssl/kube-apiserver.yml"
+  cmd $ip "sudo mv $SERVER_PEM /etc/kubernetes/ssl/server.pem"
+  cmd $ip "sudo mv $SERVER_KEY_PEM /etc/kubernetes/ssl/server-key.pem"
+  cmd $ip "sudo mv $CA_PEM /etc/kubernetes/ssl/ca.pem"
+  cmd $ip "sudo chown -R root:root /etc/kubernetes/ssl/"
+  cmd $ip "sudo chmod 0600 /etc/kubernetes/ssl/*"
 
   # docker config
   cmd $ip "sudo mkdir /home/core/.docker"
@@ -108,12 +126,19 @@ function upload_certs () {
 function create_droplet () {
   data=$1
   new_ssh_id=$(cat $ssh_id_file)
+
+  if [[ "$TECH_VERSION" == "edge" ]] ; then
+    COREOS_IMAGE="coreos-alpha"
+  else
+    COREOS_IMAGE="coreos-stable"
+  fi
+
   curl -X POST "https://api.digitalocean.com/v2/droplets" \
        -H "Content-Type: application/json" \
        -H "Authorization: Bearer $DO_TOKEN" \
        -d '{"name":"'"$DROPLET_NAME"'",
            "region":"'"$REGION"'",
-           "image": "coreos-stable",
+           "image": "'"$COREOS_IMAGE"'",
            "size":"'"$SIZE"'",
            "ipv6":true,
            "private_networking":true,
@@ -147,7 +172,7 @@ function work_on_droplet () {
       if [[ "$check_master" == "master" ]] ; then
         echo $private_ip > "$private_ip_file"
       fi
-      $ROOT_DIR/cfssl/generate_server_certs.sh "$ROOT_DIR" "$public_ip, $DROPLET_NAME.local, $DROPLET_NAME" "$DROPLET_NAME"
+      $ROOT_DIR/cfssl/generate_server_certs.sh "$ROOT_DIR" "$public_ip, $DROPLET_NAME"
       upload_certs "$public_ip"
       upload_ssh_files "$public_ip"
       break
