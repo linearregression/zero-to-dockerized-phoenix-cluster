@@ -17,7 +17,7 @@ Full stack on Digital Ocean
 
 - [x] dockerize Phoenix app
 - [x] [more secure sshd](https://stribika.github.io/2015/01/04/secure-secure-shell.html)
-- [ ] Postgresql cluster
+- [ ] [persiste Postgresql cluster](http://www.livewyer.com/blog/2015/10/02/kubernetes-exciting-experimental-features) - with [GlusterFS](https://github.com/rootfs/kubernetes/tree/wip-gluster/examples/glusterfs) or [Ceph](https://github.com/rootfs/docker-ceph)
 - [ ] dockerize NGINX
 - [ ] app registration discovery for nginx load balancer(done by confd)
 - [ ] use vulcand instead of nginx load balancer
