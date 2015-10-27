@@ -1,14 +1,12 @@
 zero-to-dockerized-phoenix-cluster
 ----------------------------------
 
-CoreOS + Kubernetes + Phoenix on [Digital Ocean](https://www.digitalocean.com/?refcode=842fc3e1bfa6)
+CoreOS + Kubernetes + Phoenix on [Digital Ocean](https://www.digitalocean.com/?refcode=842fc3e1bfa6) with one line command.
 
-| Tool | Version | Specified file |
+| Tool | Edge Version | Stable Version |
 | --- | --- |  --- |
-| CoreOS image | coreos-stable | bin/create_droplet.sh |
-| kube-apiserver | v0.19.3 | bin/master.yml node.yml |
-| kube-controller-manager | v0.19.3 | bin/master.yml node.yml |
-| kube-scheduler | v0.19.3 | bin/master.yml node.yml |
+| CoreOS image | coreos-stable | coreos-alpha |
+| Kubernetes | v0.19.3 | bin/master.yml node.yml |
 
 # WARNING : THIS REPO IS NOT FULLY TESTED YET(COREOS PART IS FINE).
 
@@ -50,7 +48,7 @@ https://github.com/mhamrah/kubernetes-coreos-units
 - [x] [self signed certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
 - [x] [docker TLS auth using self signed certificates](https://coreos.com/os/docs/latest/customizing-docker.html)
 - [x] [access docker hub](https://coreos.com/os/docs/latest/registry-authentication.html) and here is [the issue](https://github.com/coreos/bugs/issues/820)
-- [x] [kubernetes](http://www.livewyer.com/blog/2015/05/20/deploying-kubernetes-digitalocean)
+- [x] [kubernetes](https://github.com/mhamrah/kubernetes-coreos-units)
 - [x] [pass kubernetes conformance tests](https://coreos.com/kubernetes/docs/latest/conformance-tests.html)
 - [ ] Set docker machine dir
 
@@ -100,12 +98,10 @@ https://www.turnkeylinux.org/blog/shell-error-handling
 
 [Generate Self Signed Certificates](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
 
-[CoreOS Cloud config](https://github.com/coreos/coreos-cloudinit/blob/master/Documentation/cloud-config.md#users)
-
 [String Tricks that Bash Knows](http://spin.atomicobject.com/2014/02/16/bash-string-maniuplation/)
-
-[Giant swarm blog: Getting Started with Microservices using Ruby on Rails and Docker](http://blog.giantswarm.io/getting-started-with-microservices-using-ruby-on-rails-and-docker)
 
 [martinfowler: microservice-testing](http://martinfowler.com/articles/microservice-testing/)
 
 [Rainforest: Docker in Action - Development to Delivery, Part 2](https://blog.rainforestqa.com/2014-12-08-docker-in-action-from-deployment-to-delivery-part-2-continuous-integration/)
+
+[Dockering Meteor - 6th Meteor Meetup Seoul](https://github.com/jaigouk/zero-to-dockerized-meteor-cluster)

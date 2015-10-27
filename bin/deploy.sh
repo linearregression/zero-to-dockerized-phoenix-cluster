@@ -79,7 +79,7 @@ done
 
 if ! echo $TECH_VERSION | grep -qE 'stable|edge'; then
     echo "========================="
-    echo 'TECH_VERSION must be one of stable|edge'
+    echo 'TECH_VERSION must be one of stable | edge'
     echo "========================="
     echo "Please input your TECH_VERSION :"
     read INPUT_TECH_VERSION
@@ -170,15 +170,15 @@ export private_ip_file=$(mktemp "./private_ip.XXXXXX")
 export ssh_id_file=$(mktemp "$ROOT_DIR/ssh/ssh_id.XXXXXX")
 
 
-echo "========================="
+echo "========================================="
 echo "Creating ssh and upload to digital ocean"
-echo "========================="
+echo "========================================="
 ../ssh/ssh.sh "$NAME_PREFIX" $ROOT_DIR $ssh_id_file
 
-echo "========================="
-echo "Creating base certs"
-echo "========================="
-../cfssl/generate_certs.sh $ROOT_DIR
+echo "====================================="
+echo "Creating ca, admin, client role certs"
+echo "====================================="
+../cfssl/generate_ca_and_admin_certs.sh $ROOT_DIR
 
 for i in `seq $NUM_OF_DROPLETS`; do
   /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i" "../ssh/$NAME_PREFIX.key" $ROOT_DIR $TECH_VERSION

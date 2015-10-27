@@ -2,6 +2,37 @@
 
 ---
 write-files:
+  - path: /etc/kubernetes/kube-config.yaml
+    owner: root:root
+    permissions: "0600"
+    content: |
+      KUBE_CONFIG_DATA
+  - path: /etc/kubernetes/kube-proxy.yaml
+    owner: root:root
+    permissions: "0600"
+    content: |
+      PROXY_CONFIG_DATA
+  - path: /etc/leader
+    owner: root:root
+    permissions: "0600"
+    content: |
+      LEADER_CONFIG_DATA
+
+  - path: /home/core/.docker/config.json
+    owner: core:core
+    permissions: "0644"
+    content: |
+      DOCKER_CONFIG_DATA
+  - path: /etc/ssh
+    owner: root:root
+    permissions: "0644"
+    content: |
+      SSH_HOT_ED25519_DATA
+  - path: /etc/ssh
+    owner: root:root
+    permissions: "0644"
+    content: |
+      SSH_HOST_RSA_DATA
   - path: /etc/conf.d/nfs
     permissions: "0644"
     content: |
@@ -21,7 +52,7 @@ write-files:
     content: |
       private_ipv4: $private_ipv4
   - path: /etc/ssh/sshd_config
-    permissions: 0600
+    permissions: "0600"
     owner: root:root
     content: |
       Protocol 2
@@ -182,16 +213,17 @@ coreos:
         After=download-kubernetes.service
         [Service]
         EnvironmentFile=/etc/network-environment
+        EnvironmentFile=/etc/leader
         ExecStartPre=/usr/bin/chmod +x /opt/bin/kubelet
         # wait for kubernetes master to be up and ready
         ExecStart=/opt/bin/kubelet \
-        --api_servers=http://127.0.0.1:8080 \
-        --register-node=false \
-        --allow-privileged=true \
-        --hostname-override=${DEFAULT_IPV4} \
-        --cadvisor_port=4194 \
         --address=0.0.0.0 \
         --port=10250 \
+        --hostname-override=${DEFAULT_IPV4} \
+        --api_servers=http://${LEADER_ENDPOINT}:8080 \
+        --register-node=false \
+        --allow-privileged=true \
+        --cadvisor_port=4194 \
         --allow_privileged=true \
         --logtostderr=true \
         --healthz_bind_address=0.0.0.0 \
@@ -211,11 +243,13 @@ coreos:
         After=setup-network-environment.service
         After=download-kubernetes.service
         [Service]
+        EnvironmentFile=/etc/leader
         ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-proxy
         # wait for kubernetes master to be up and ready
         ExecStartPre=/opt/bin/wupiao $private_ipv4 8080
         ExecStart=/opt/bin/kube-proxy \
-        --master=$private_ipv4:8080 \
+        --master=${LEADER_ENDPOINT}:8080 \
         --logtostderr=true
+        --kubeconfig="/etc/leader"
         Restart=always
         RestartSec=10

@@ -2,14 +2,14 @@
 
 # https://coreos.com/os/docs/latest/generate-self-signed-certificates.html
 
-export path=$1
-export ADDRESS=$2
-export NAME=$3
+path=$1
+ADDRESS=$2
+NAME=$3
 
 if [[ $NAME == *"-1"* ]]; then
-  export ROLE="server"
+  ROLE="server"
 else
-  export ROLE="client-server"
+  ROLE="client-server"
 fi
 
 # server AND client-server

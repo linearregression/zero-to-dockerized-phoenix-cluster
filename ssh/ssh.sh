@@ -19,17 +19,18 @@ if [ -f "$pub_file" ]; then
 fi
 
 if [ -f "$ed25519_file" ]; then
-  echo "ed25519_file found."
-else
-  ssh-keygen -t ed25519 -N "" -f $ed25519_file
+  rm -f "$ed25519_file"
 fi
 
 if [ -f "$host_rsa_file" ]; then
-  echo "host_rsa_file found."
-else
-  ssh-keygen -t rsa -b 4096 -N ""  -f $host_rsa_file
+  rm -f "$host_rsa_file"
 fi
 
+ssh-keygen -t ed25519 -N "" -f $ed25519_file  < /dev/null
+ssh-keygen -t rsa -b 4096 -N ""  -f $host_rsa_file  < /dev/null
+
+# not going to delete these.
+# because it takes too much time to generate.
 if [ -f "$moduli_all" ]; then
   echo "moduli_all found."
 else
