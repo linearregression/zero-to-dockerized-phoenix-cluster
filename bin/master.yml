@@ -42,9 +42,6 @@ write-files:
           MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-ripemd160-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160,umac-128@openssh.com
 
 hostname: master
-update:
-    group: "alpha"
-    reboot-strategy: "off"
 
 coreos:
   etcd2:
@@ -67,6 +64,10 @@ coreos:
     interface: $public_ipv4
     etcd_prefix: /coreos.com/network
     etcd_endpoints: http://$public_ipv4:2379
+
+  update:
+    group: "alpha"
+    reboot-strategy: "off"
 
   units:
     - name: fleet.service
@@ -199,64 +200,22 @@ coreos:
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
-    - name: kube-apiserver.service
+
+    - name: kube-proxy.service
       command: start
       content: |
         [Unit]
-        Description=Kubernetes API Server
+        Description=Kubernetes Proxy
         Documentation=https://github.com/GoogleCloudPlatform/kubernetes
-        Requires=setup-network-environment.service etcd2.service
-        After=setup-network-environment.service etcd2.service
+        Requires=setup-network-environment.service
+        After=setup-network-environment.service
         After=download-kubernetes.service
         [Service]
-        EnvironmentFile=/etc/network-environment
-        ExecStartPre=-/usr/bin/mkdir -p /opt/bin
-        ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-apiserver
-        ExecStartPre=/opt/bin/wupiao 127.0.0.1:2379/v2/machines
-        ExecStart=/opt/bin/kube-apiserver \
-        --service_account_key_file=/opt/bin/kube-serviceaccount.key \
-        --service_account_lookup=false \
-        --admission_control=NamespaceLifecycle,NamespaceAutoProvision,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota \
-        --runtime_config=api/v1 \
-        --allow_privileged=true \
-        --insecure_bind_address=0.0.0.0 \
-        --insecure_port=8080 \
-        --kubelet_https=true \
-        --secure_port=6443 \
-        --service-cluster-ip-range=10.100.0.0/16 \
-        --etcd_servers=http://127.0.0.1:2379 \
-        --public_address_override=$public_ipv4 \
+        ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-proxy
+        # wait for kubernetes master to be up and ready
+        ExecStartPre=/opt/bin/wupiao $private_ipv4 8080
+        ExecStart=/opt/bin/kube-proxy \
+        --master=$private_ipv4:8080 \
         --logtostderr=true
-        Restart=always
-        RestartSec=10
-    - name: kube-controller-manager.service
-      command: start
-      content: |
-        [Unit]
-        Description=Kubernetes Controller Manager
-        Documentation=https://github.com/GoogleCloudPlatform/kubernetes
-        Requires=kube-apiserver.service
-        After=kube-apiserver.service
-        [Service]
-        ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-controller-manager -z /opt/bin/kube-controller-manager https://storage.googleapis.com/kubernetes-release/release/v0.19.3/bin/linux/amd64/kube-controller-manager
-        ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-controller-manager
-        ExecStart=/opt/bin/kube-controller-manager \
-        --service_account_private_key_file=/opt/bin/kube-serviceaccount.key \
-        --master=127.0.0.1:8080 \
-        --logtostderr=true
-        Restart=always
-        RestartSec=10
-    - name: kube-scheduler.service
-      command: start
-      content: |
-        [Unit]
-        Description=Kubernetes Scheduler
-        Documentation=https://github.com/GoogleCloudPlatform/kubernetes
-        Requires=kube-apiserver.service
-        After=kube-apiserver.service
-        [Service]
-        ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-scheduler -z /opt/bin/kube-scheduler https://storage.googleapis.com/kubernetes-release/release/v0.19.3/bin/linux/amd64/kube-scheduler
-        ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-scheduler
-        ExecStart=/opt/bin/kube-scheduler --master=127.0.0.1:8080
         Restart=always
         RestartSec=10

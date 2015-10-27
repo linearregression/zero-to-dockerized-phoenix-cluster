@@ -1,6 +1,4 @@
 #cloud-config
-
----
 write-files:
   - path: /opt/bin/wupiao
     permissions: "0755"
@@ -35,7 +33,6 @@ write-files:
           HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com,ssh-rsa-cert-v01@openssh.com,ssh-ed25519,ssh-rsa
           Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
           MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-ripemd160-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160,umac-128@openssh.com
-
 coreos:
   etcd2:
     discovery: "DISCOVERY_URL"
@@ -43,15 +40,9 @@ coreos:
     advertise-client-urls: "http://0.0.0.0:2379,http://0.0.0.0:4001"
     initial-cluster: "master=http://MASTER_PRIVATE_IP:2380"
     proxy: on
-
   fleet:
     public-ip: "$public_ipv4"# used for fleetctl ssh command
     metadata: "role=node"
-
-  update:
-    group: "alpha"
-    reboot-strategy: "off"
-
   units:
     - name: fleet.service
       command: start
@@ -64,7 +55,6 @@ coreos:
             Requires=etcd2.service
             [Service]
             ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config '{"Network":"10.244.0.0/16", "Backend": {"Type": "vxlan"}}'
-
     - name: setup-network-environment.service
       command: start
       content: |
@@ -80,13 +70,56 @@ coreos:
         ExecStart=/opt/bin/setup-network-environment
         RemainAfterExit=yes
         Type=oneshot
-
+    - name: kube-proxy.service
+      command: start
+      content: |
+        [Unit]
+        Description=Kubernetes Proxy
+        Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+        Requires=setup-network-environment.service
+        After=setup-network-environment.service
+        [Service]
+        ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-proxy -z /opt/bin/kube-proxy https://storage.googleapis.com/kubernetes-release/release/v0.19.3/bin/linux/amd64/kube-proxy
+        ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-proxy
+        # wait for kubernetes master to be up and ready
+        ExecStartPre=/opt/bin/wupiao MASTER_PRIVATE_IP 8080
+        ExecStart=/opt/bin/kube-proxy \
+        --master=MASTER_PRIVATE_IP:8080 \
+        --logtostderr=true
+        Restart=always
+        RestartSec=10
+    - name: kube-kubelet.service
+      command: start
+      content: |
+        [Unit]
+        Description=Kubernetes Kubelet
+        Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+        Requires=setup-network-environment.service
+        After=setup-network-environment.service
+        [Service]
+        EnvironmentFile=/etc/network-environment
+        ExecStartPre=/usr/bin/curl -L -o /opt/bin/kubelet -z /opt/bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v0.19.3/bin/linux/amd64/kubelet
+        ExecStartPre=/usr/bin/chmod +x /opt/bin/kubelet
+        # wait for kubernetes master to be up and ready
+        ExecStartPre=/opt/bin/wupiao MASTER_PRIVATE_IP 8080
+        ExecStart=/opt/bin/kubelet \
+        --address=0.0.0.0 \
+        --port=10250 \
+        --hostname_override=$public_ipv4 \
+        --api_servers=MASTER_PRIVATE_IP:8080 \
+        --allow_privileged=true \
+        --logtostderr=true \
+        --cadvisor_port=4194 \
+        --healthz_bind_address=0.0.0.0 \
+        --healthz_port=10248
+        Restart=always
+        RestartSec=10
     - name: docker.service
       drop-ins:
         - name: 10-tls-verify.conf
           content: |
             [Service]
-            Environment="DOCKER_OPTS=-H=0.0.0.0:2376 --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/kubernetes/ssl/server.pem --tlskey=/etc/kubernetes/ssl/server-key.pem"
+            Environment="DOCKER_OPTS=-H=0.0.0.0:2376 --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem"
       command: restart
       content: |
         [Unit]
@@ -120,74 +153,6 @@ coreos:
         [Service]
         Type=oneshot
         ExecStart=/usr/bin/systemctl enable docker-tcp.socket
-
-    - name: download-kubernetes.service
-      enable: true
-      command: start
-      content: |
-        [Unit]
-        After=network-online.target
-        Description=Download Kubernetes Binaries
-        Documentation=https://github.com/GoogleCloudPlatform/kubernetes
-        Requires=network-online.target
-        [Service]
-        Environment=KUBE_RELEASE_TARBALL=KUBE_RELEASE_TARBALL_URL
-        ExecStartPre=/bin/mkdir -p /opt/bin/
-        ExecStart=/bin/bash -c "curl -s -L $KUBE_RELEASE_TARBALL | tar xzv -C /tmp/"
-        ExecStart=/bin/tar xzvf /tmp/kubernetes/server/kubernetes-server-linux-amd64.tar.gz -C /opt
-        ExecStartPost=/bin/ln -s /opt/kubernetes/server/bin/kubectl /opt/bin/
-        ExecStartPost=/bin/mv /tmp/kubernetes/examples/guestbook /home/core/guestbook-example
-        ExecStartPost=/bin/rm -rf /tmp/kubernetes
-        ExecStartPost=/usr/bin/chmod -R a+r /opt/kubernetes
-        ExecStartPost=/usr/bin/chmod -R a+x /opt/kubernetes
-        RemainAfterExit=yes
-        Type=oneshot
-
-    - name: kube-kubelet.service
-      command: start
-      content: |
-        [Unit]
-        Description=Kubernetes Kubelet
-        Documentation=https://github.com/GoogleCloudPlatform/kubernetes
-        Requires=setup-network-environment.service
-        After=setup-network-environment.service
-        After=download-kubernetes.service
-        [Service]
-        EnvironmentFile=/etc/network-environment
-        ExecStartPre=/usr/bin/chmod +x /opt/bin/kubelet
-        # wait for kubernetes master to be up and ready
-        ExecStart=/opt/bin/kubelet \
-        --api_servers=http://127.0.0.1:8080 \
-        --register-node=false \
-        --allow-privileged=true \
-        --hostname-override=${DEFAULT_IPV4} \
-        --cadvisor_port=4194 \
-        --address=0.0.0.0 \
-        --port=10250 \
-        --allow_privileged=true \
-        --logtostderr=true \
-        --healthz_bind_address=0.0.0.0 \
-        --healthz_port=10248
-        Restart=always
-        RestartSec=10
-        [Install]
-        WantedBy=multi-user.target
-
-    - name: kube-proxy.service
-      command: start
-      content: |
-        [Unit]
-        Description=Kubernetes Proxy
-        Documentation=https://github.com/GoogleCloudPlatform/kubernetes
-        Requires=setup-network-environment.service
-        After=setup-network-environment.service
-        After=download-kubernetes.service
-        [Service]
-        ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-proxy
-        # wait for kubernetes master to be up and ready
-        ExecStartPre=/opt/bin/wupiao MASTER_PRIVATE_IP 8080
-        ExecStart=/opt/bin/kube-proxy \
-        --master=MASTER_PRIVATE_IP:8080 \
-        --logtostderr=true
-        Restart=always
-        RestartSec=10
+  update:
+    group: "alpha"
+    reboot-strategy: "off"

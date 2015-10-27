@@ -92,6 +92,7 @@ CMD ["mix", "phoenix.server"]
 
 # References
 
+https://github.com/kubernetes/kubernetes/tree/master/docs/getting-started-guides/coreos
 
 https://www.turnkeylinux.org/blog/shell-error-handling
 

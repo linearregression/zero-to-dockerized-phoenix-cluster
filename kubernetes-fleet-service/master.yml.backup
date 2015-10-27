@@ -2,14 +2,19 @@
 
 ---
 write-files:
+  - path: /etc/conf.d/nfs
+    permissions: "0644"
+    content: |
+      OPTS_RPC_MOUNTD=""
   - path: /opt/bin/wupiao
     permissions: "0755"
     content: |
       #!/bin/bash
       # [w]ait [u]ntil [p]ort [i]s [a]ctually [o]pen
-      [ -n "$1" ] && [ -n "$2" ] && while ! curl --output /dev/null \
-        --silent --head --fail \
-        http://${1}:${2}; do sleep 1 && echo -n .; done;
+      [ -n "$1" ] && \
+        until curl -o /dev/null -sIf http://${1}; do \
+          sleep 1 && echo .;
+        done;
       exit $?
   - path: /etc/coreos-checker
     permissions: "0755"
@@ -36,21 +41,32 @@ write-files:
           Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
           MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-ripemd160-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160,umac-128@openssh.com
 
+hostname: master
+update:
+    group: "alpha"
+    reboot-strategy: "off"
+
 coreos:
   etcd2:
+    name: master
     discovery: "DISCOVERY_URL"
     listen-client-urls: "http://0.0.0.0:2379,http://0.0.0.0:4001"
-    advertise-client-urls: "http://0.0.0.0:2379,http://0.0.0.0:4001"
-    initial-cluster: "master=http://MASTER_PRIVATE_IP:2380"
-    proxy: on
+    advertise-client-urls: "http://$private_ipv4:2379,http://$private_ipv4:4001"
+    initial-cluster-token: "k8s_etcd"
+    listen-peer-urls: "http://$private_ipv4:2380,http://$private_ipv4:7001"
+    initial-advertise-peer-urls: "http://$private_ipv4:2380"
+    initial-cluster: "master=http://$private_ipv4:2380"
+    initial-cluster-state: "new"
 
   fleet:
     public-ip: "$public_ipv4"# used for fleetctl ssh command
-    metadata: "role=node"
+    metadata: "role=master"
+    etcd_servers: http://$public_ipv4:2379
 
-  update:
-    group: "alpha"
-    reboot-strategy: "off"
+  flannel:
+    interface: $public_ipv4
+    etcd_prefix: /coreos.com/network
+    etcd_endpoints: http://$public_ipv4:2379
 
   units:
     - name: fleet.service
@@ -68,6 +84,12 @@ coreos:
     - name: setup-network-environment.service
       command: start
       content: |
+        # we can use default ipv4 env var
+        #
+        # LO_IPV4=127.0.0.1
+        # ENO16777736_IPV4=192.168.12.10
+        # DEFAULT_IPV4=192.168.12.10
+        #
         [Unit]
         Description=Setup Network Environment
         Documentation=https://github.com/kelseyhightower/setup-network-environment
@@ -86,7 +108,12 @@ coreos:
         - name: 10-tls-verify.conf
           content: |
             [Service]
-            Environment="DOCKER_OPTS=-H=0.0.0.0:2376 --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/kubernetes/ssl/server.pem --tlskey=/etc/kubernetes/ssl/server-key.pem"
+            Environment="DOCKER_OPTS=-H=0.0.0.0:2376 --tlsverify --tlscacert=/etc/kubernetes/ssl/ca.pem --tlscert=/etc/kubernetes/ssl/server.pem --tlskey=/etc/docker/ssl/server-key.pem"
+        - name: 40-flannel.conf
+          content: |
+            [Unit]
+            Requires=flanneld.service
+            After=flanneld.service
       command: restart
       content: |
         [Unit]
@@ -172,22 +199,64 @@ coreos:
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
-
-    - name: kube-proxy.service
+    - name: kube-apiserver.service
       command: start
       content: |
         [Unit]
-        Description=Kubernetes Proxy
+        Description=Kubernetes API Server
         Documentation=https://github.com/GoogleCloudPlatform/kubernetes
-        Requires=setup-network-environment.service
-        After=setup-network-environment.service
+        Requires=setup-network-environment.service etcd2.service
+        After=setup-network-environment.service etcd2.service
         After=download-kubernetes.service
         [Service]
-        ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-proxy
-        # wait for kubernetes master to be up and ready
-        ExecStartPre=/opt/bin/wupiao MASTER_PRIVATE_IP 8080
-        ExecStart=/opt/bin/kube-proxy \
-        --master=MASTER_PRIVATE_IP:8080 \
+        EnvironmentFile=/etc/network-environment
+        ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+        ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-apiserver
+        ExecStartPre=/opt/bin/wupiao 127.0.0.1:2379/v2/machines
+        ExecStart=/opt/bin/kube-apiserver \
+        --service_account_key_file=/opt/bin/kube-serviceaccount.key \
+        --service_account_lookup=false \
+        --admission_control=NamespaceLifecycle,NamespaceAutoProvision,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota \
+        --runtime_config=api/v1 \
+        --allow_privileged=true \
+        --insecure_bind_address=0.0.0.0 \
+        --insecure_port=8080 \
+        --kubelet_https=true \
+        --secure_port=6443 \
+        --service-cluster-ip-range=10.100.0.0/16 \
+        --etcd_servers=http://127.0.0.1:2379 \
+        --public_address_override=$public_ipv4 \
         --logtostderr=true
+        Restart=always
+        RestartSec=10
+    - name: kube-controller-manager.service
+      command: start
+      content: |
+        [Unit]
+        Description=Kubernetes Controller Manager
+        Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+        Requires=kube-apiserver.service
+        After=kube-apiserver.service
+        [Service]
+        ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-controller-manager -z /opt/bin/kube-controller-manager https://storage.googleapis.com/kubernetes-release/release/v0.19.3/bin/linux/amd64/kube-controller-manager
+        ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-controller-manager
+        ExecStart=/opt/bin/kube-controller-manager \
+        --service_account_private_key_file=/opt/bin/kube-serviceaccount.key \
+        --master=127.0.0.1:8080 \
+        --logtostderr=true
+        Restart=always
+        RestartSec=10
+    - name: kube-scheduler.service
+      command: start
+      content: |
+        [Unit]
+        Description=Kubernetes Scheduler
+        Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+        Requires=kube-apiserver.service
+        After=kube-apiserver.service
+        [Service]
+        ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-scheduler -z /opt/bin/kube-scheduler https://storage.googleapis.com/kubernetes-release/release/v0.19.3/bin/linux/amd64/kube-scheduler
+        ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-scheduler
+        ExecStart=/opt/bin/kube-scheduler --master=127.0.0.1:8080
         Restart=always
         RestartSec=10
