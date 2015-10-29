@@ -18,6 +18,7 @@ pub_file=""
 SSH_ID=""
 TECH_VERSION=""
 INPUT_TECH_VERSION=""
+export ROOT_DIR=`echo ${PWD//}`
 
 USAGE="Usage: $0 [-k ssh key id] [-t digitalocean v2 token] [-o droplet name prefix] [-n number of droplets] [-e etcd token] [-s droplet size]
 Options:
@@ -133,12 +134,13 @@ else
 fi
 
 if [ -z "$ETCD_TOKEN" ]; then
-  export DISCOVERY_URL=""=`curl https://discovery.etcd.io/new?size=$NUM_OF_DROPLETS`
-  echo $DISCOVERY_URL > "./DISCOVERY_URL"
+  export DISCOVERY_URL=`curl https://discovery.etcd.io/new?size=$NUM_OF_DROPLETS`
+  echo $DISCOVERY_URL > "${ROOT_DIR}/config-files/DISCOVERY_URL"
   echo "saved etcd discovery url at ./bin/DISCOVERY_URL"
   echo "$DISCOVERY_URL"
 else
   export DISCOVERY_URL="https://discovery.etcd.io/$ETCD_TOKEN"
+  echo $DISCOVERY_URL > "${ROOT_DIR}/config-files/DISCOVERY_URL"
   echo "$DISCOVERY_URL"
 fi
 
@@ -165,24 +167,27 @@ fi
 
 
 NAME_PREFIX=$DROPLET_NAME
-export ROOT_DIR=`echo ${PWD/bin//}`
 export private_ip_file=$(mktemp "./private_ip.XXXXXX")
 export ssh_id_file=$(mktemp "$ROOT_DIR/ssh/ssh_id.XXXXXX")
 
+cp $ROOT_DIR/config-files/master.yml $ROOT_DIR/config-files/tmp-master.yml
+cp $ROOT_DIR/config-files/node.yml $ROOT_DIR/config-files/tmp-node.yml
 
 echo "========================================="
 echo "Creating ssh and upload to digital ocean"
 echo "========================================="
-../ssh/ssh.sh "$NAME_PREFIX" $ROOT_DIR $ssh_id_file
+$ROOT_DIR/ssh/ssh.sh "$NAME_PREFIX" $ROOT_DIR $ssh_id_file
 
 echo "====================================="
 echo "Creating ca, admin, client role certs"
 echo "====================================="
-../cfssl/generate_ca_and_admin_certs.sh $ROOT_DIR
+$ROOT_DIR/cfssl/generate_ca_and_admin_certs.sh $ROOT_DIR
 
 for i in `seq $NUM_OF_DROPLETS`; do
-  /bin/bash ./create_droplet.sh "$NAME_PREFIX-$i" "../ssh/$NAME_PREFIX.key" $ROOT_DIR $TECH_VERSION
+  $ROOT_DIR/bin/create_droplet.sh "$NAME_PREFIX-$i" "$ROOT_DIR/ssh/$NAME_PREFIX.key" $ROOT_DIR $TECH_VERSION
 done
 
+rm $ROOT_DIR/config-files/tmp-master.yml
+rm $ROOT_DIR/config-files/tmp-node.yml
 rm $private_ip_file
 rm $ssh_id_file

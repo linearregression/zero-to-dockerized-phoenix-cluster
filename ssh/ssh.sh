@@ -54,7 +54,7 @@ ssh_txt=$(curl -X POST "https://api.digitalocean.com/v2/account/keys" \
                -d '{"name":"'"$NAME"'",
                    "public_key":"'"$public_key"'"}')
 
-SSH_ID=$(echo $ssh_txt | ./JSON.sh -b | egrep '\["ssh_key","id"\]' | xargs echo | awk '{x=$2}END{print x}')
+SSH_ID=$(echo $ssh_txt | $ROOT_DIR/bin/JSON.sh -b | egrep '\["ssh_key","id"\]' | xargs echo | awk '{x=$2}END{print x}')
 echo $SSH_ID > "$ssh_id_file"
 ssh-add $key_file
 

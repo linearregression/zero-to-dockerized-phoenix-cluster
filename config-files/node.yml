@@ -2,37 +2,16 @@
 
 ---
 write-files:
-  - path: /etc/kubernetes/kube-config.yaml
-    owner: root:root
-    permissions: "0600"
-    content: |
-      KUBE_CONFIG_DATA
-  - path: /etc/kubernetes/kube-proxy.yaml
-    owner: root:root
-    permissions: "0600"
-    content: |
-      PROXY_CONFIG_DATA
-  - path: /etc/leader
-    owner: root:root
-    permissions: "0600"
-    content: |
-      LEADER_CONFIG_DATA
-
   - path: /home/core/.docker/config.json
     owner: core:core
     permissions: "0644"
     content: |
       DOCKER_CONFIG_DATA
-  - path: /etc/ssh
-    owner: root:root
+  - path: /home/core/.dockercfg
+    owner: core:core
     permissions: "0644"
     content: |
-      SSH_HOT_ED25519_DATA
-  - path: /etc/ssh
-    owner: root:root
-    permissions: "0644"
-    content: |
-      SSH_HOST_RSA_DATA
+      DOCKER_CONFIG_DATA
   - path: /opt/bin/wupiao
     permissions: "0755"
     content: |

@@ -2,37 +2,16 @@
 
 ---
 write-files:
-  - path: /etc/kubernetes/kube-config.yaml
-    owner: root:root
-    permissions: "0600"
-    content: |
-      KUBE_CONFIG_DATA
-  - path: /etc/kubernetes/kube-proxy.yaml
-    owner: root:root
-    permissions: "0600"
-    content: |
-      PROXY_CONFIG_DATA
-  - path: /etc/leader
-    owner: root:root
-    permissions: "0600"
-    content: |
-      LEADER_CONFIG_DATA
-
   - path: /home/core/.docker/config.json
     owner: core:core
     permissions: "0644"
     content: |
       DOCKER_CONFIG_DATA
-  - path: /etc/ssh/ssh_host_ed25519_key
-    owner: root:root
+  - path: /home/core/.dockercfg
+    owner: core:core
     permissions: "0644"
     content: |
-      SSH_HOT_ED25519_DATA
-  - path: /etc/ssh/ssh_host_rsa_key
-    owner: root:root
-    permissions: "0644"
-    content: |
-      SSH_HOST_RSA_DATA
+      DOCKER_CONFIG_DATA
   - path: /etc/conf.d/nfs
     permissions: "0644"
     content: |
@@ -71,9 +50,7 @@ write-files:
           HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com,ssh-rsa-cert-v01@openssh.com,ssh-ed25519,ssh-rsa
           Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
           MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-ripemd160-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160,umac-128@openssh.com
-
 hostname: master
-
 coreos:
   etcd2:
     name: master
@@ -85,21 +62,17 @@ coreos:
     initial-advertise-peer-urls: "http://$private_ipv4:2380"
     initial-cluster: "master=http://$private_ipv4:2380"
     initial-cluster-state: "new"
-
   fleet:
     public-ip: "$public_ipv4"# used for fleetctl ssh command
     metadata: "role=master"
     etcd_servers: http://$public_ipv4:2379
-
   flannel:
     interface: $public_ipv4
     etcd_prefix: /coreos.com/network
     etcd_endpoints: http://$public_ipv4:2379
-
   update:
     group: "alpha"
     reboot-strategy: "off"
-
   units:
     - name: fleet.service
       command: start
@@ -112,7 +85,6 @@ coreos:
             Requires=etcd2.service
             [Service]
             ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config '{"Network":"10.244.0.0/16", "Backend": {"Type": "vxlan"}}'
-
     - name: setup-network-environment.service
       command: start
       content: |
@@ -134,7 +106,6 @@ coreos:
         ExecStart=/opt/bin/setup-network-environment
         RemainAfterExit=yes
         Type=oneshot
-
     - name: docker.service
       drop-ins:
         - name: 10-tls-verify.conf
@@ -179,7 +150,6 @@ coreos:
         [Service]
         Type=oneshot
         ExecStart=/usr/bin/systemctl enable docker-tcp.socket
-
     - name: download-kubernetes.service
       enable: true
       command: start

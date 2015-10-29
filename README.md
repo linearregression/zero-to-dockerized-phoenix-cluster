@@ -5,7 +5,7 @@ CoreOS + Kubernetes + Phoenix on [Digital Ocean](https://www.digitalocean.com/?r
 
 | Tool | Edge Version | Stable Version |
 | --- | --- |  --- |
-| CoreOS image | coreos-stable | coreos-alpha |
+| CoreOS image | coreos-alpha | coreos-stable |
 | Kubernetes | V1.2.0-alpha.2 | v1.0.7 |
 
 # WARNING : THIS REPO IS NOT FULLY TESTED YET(COREOS PART IS FINE).
@@ -32,8 +32,7 @@ Given that you already have exported DIGITAL_OCEAN_TOKEN
 and you already have installed docker-machine locally,
 
 ```
-cd bin
-./deploy.sh -v edge -n 3 -t $DIGITAL_OCEAN_TOKEN -s 4gb -r sgp1 -o <name>
+./bin/deploy.sh -v edge -n 3 -t $DIGITAL_OCEAN_TOKEN -s 4gb -r sgp1 -o <name>
 
 ```
 
@@ -90,9 +89,9 @@ CMD ["mix", "phoenix.server"]
 
 # References
 
-https://github.com/kubernetes/kubernetes/tree/master/docs/getting-started-guides/coreos
+[Dockering Meteor - 6th Meteor Meetup Seoul](https://github.com/jaigouk/zero-to-dockerized-meteor-cluster)
 
-https://www.turnkeylinux.org/blog/shell-error-handling
+[CoreOS+Kubernetes Step By Step](https://coreos.com/kubernetes/docs/latest/getting-started.html)
 
 [HDFS vs Ceph vs GlusterFS](http://iopscience.iop.org/article/10.1088/1742-6596/513/4/042014/pdf)
 
@@ -104,4 +103,4 @@ https://www.turnkeylinux.org/blog/shell-error-handling
 
 [Rainforest: Docker in Action - Development to Delivery, Part 2](https://blog.rainforestqa.com/2014-12-08-docker-in-action-from-deployment-to-delivery-part-2-continuous-integration/)
 
-[Dockering Meteor - 6th Meteor Meetup Seoul](https://github.com/jaigouk/zero-to-dockerized-meteor-cluster)
+[shell-error-handling](https://www.turnkeylinux.org/blog/shell-error-handling)
