@@ -1,0 +1,18 @@
+[Unit]
+Description=Kubernetes Proxy
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+Requires=setup-network-environment.service
+After=setup-network-environment.service
+After=download-kubernetes.service
+[Service]
+
+EnvironmentFile=/etc/leader
+ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-proxy
+# wait for kubernetes master to be up and ready
+ExecStartPre=/opt/bin/wupiao ${LEADER_ENDPOINT}:9090
+ExecStart=/opt/bin/kube-proxy \
+--master=${LEADER_ENDPOINT}:9090 \
+--logtostderr=true
+--kubeconfig="/etc/leader"
+Restart=always
+RestartSec=10

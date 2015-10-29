@@ -1,1 +1,15 @@
-kube-scheduler.service
+[Unit]
+Description=Kubernetes Scheduler
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+Requires=kube-apiserver.service
+After=kube-apiserver.service
+
+[Service]
+ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-scheduler
+ExecStart=/opt/bin/kube-scheduler --master=http://127.0.0.1:9090
+Restart=always
+RestartSec=10
+
+[X-Fleet]
+MachineOf=kube-apiserver.service

@@ -1,1 +1,21 @@
-kube-register.service
+[Unit]
+Description=Kubernetes Registration Service
+Documentation=https://github.com/kelseyhightower/kube-register
+Requires=kube-apiserver.service
+After=kube-apiserver.service
+Requires=fleet.service
+After=fleet.service
+After=download-kubernetes.service
+
+[Service]
+ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-register
+ExecStart=/opt/bin/kube-register \
+  --fleet-endpoint=unix:///var/run/fleet.sock \
+  --api-endpoint=http://127.0.0.1:8080 \
+  --healthz-port=10248
+Restart=always
+RestartSec=10
+
+[X-Fleet]
+MachineOf=kube-apiserver.service

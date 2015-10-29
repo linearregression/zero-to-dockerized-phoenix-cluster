@@ -1,1 +1,18 @@
-kube-controller-manager.service
+[Unit]
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+Requires=kube-apiserver.service
+After=kube-apiserver.service
+
+[Service]
+ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-controller-manager
+ExecStartPre=/opt/bin/wupiao 127.0.0.1:2379/v2/machines
+ExecStart=/opt/bin/kube-controller-manager \
+  --master=127.0.0.1:9090 \
+  --logtostderr=true
+Restart=always
+RestartSec=10
+
+[X-Fleet]
+MachineOf=kube-apiserver.service
