@@ -23,12 +23,12 @@ write-files:
     permissions: "0644"
     content: |
       DOCKER_CONFIG_DATA
-  - path: /etc/ssh
+  - path: /etc/ssh/ssh_host_ed25519_key
     owner: root:root
     permissions: "0644"
     content: |
       SSH_HOT_ED25519_DATA
-  - path: /etc/ssh
+  - path: /etc/ssh/ssh_host_rsa_key
     owner: root:root
     permissions: "0644"
     content: |

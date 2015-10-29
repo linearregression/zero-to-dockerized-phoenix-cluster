@@ -6,7 +6,7 @@ CoreOS + Kubernetes + Phoenix on [Digital Ocean](https://www.digitalocean.com/?r
 | Tool | Edge Version | Stable Version |
 | --- | --- |  --- |
 | CoreOS image | coreos-stable | coreos-alpha |
-| Kubernetes | v0.19.3 | bin/master.yml node.yml |
+| Kubernetes | V1.2.0-alpha.2 | v1.0.7 |
 
 # WARNING : THIS REPO IS NOT FULLY TESTED YET(COREOS PART IS FINE).
 
