@@ -10,3 +10,8 @@ cfssl/certs/*.csr
 cfssl/certs/*.json
 moduli.*
 ssh/ssh_*
+tmp-master.yml
+tmp-node.yml
+target-node.yml
+target-master.yml
+private_ip_file.tmp

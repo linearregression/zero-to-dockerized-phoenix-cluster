@@ -47,7 +47,7 @@ function get_proxy_config () {
 
 function get_kube_config () {
   if [[ "$TECH_VERSION" == "edge" ]] ; then
-    KUBERNETES_VERSION="V1.2..0-alpha.2"
+    KUBERNETES_VERSION="V1.2.0-alpha.2"
   else
     KUBERNETES_VERSION="v1.0.6"
   fi
